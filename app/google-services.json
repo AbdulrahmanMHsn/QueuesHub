@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "480265993836",
+    "project_id": "infinity-scanner-89498",
+    "storage_bucket": "infinity-scanner-89498.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:480265993836:android:cd85e0fdf77ae3c9302249",
+        "android_client_info": {
+          "package_name": "com.queueshub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "480265993836-i69j182fvvlojc5k2oj4c8pcqjp4bsne.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQA-HVl_ppaWk-AcqzrP605e592IIqCig"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "480265993836-i69j182fvvlojc5k2oj4c8pcqjp4bsne.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
