@@ -1,6 +1,8 @@
 package com.queueshub.domain.repository
 
 import arrow.core.Either
+import com.google.gson.Gson
+import com.queueshub.data.api.model.ApiLog
 import com.queueshub.domain.model.*
 import java.io.File
 import java.io.IOException
@@ -55,4 +57,6 @@ interface AppRepository {
         chassisFile: File?,
         note: String
     ): Either<IOException, Any>
+
+    suspend fun logData(data: ApiLog): Either<IOException, Boolean>
 }

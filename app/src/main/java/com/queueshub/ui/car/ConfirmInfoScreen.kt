@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
 import com.queueshub.ui.main.AppButton
@@ -35,6 +37,7 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
 
     val context = LocalContext.current
     val viewModel: CarViewModel = hiltViewModel()
+    val vmLog: LogsViewModel = hiltViewModel()
     val modelsState by viewModel.state.collectAsState()
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
 
@@ -233,6 +236,26 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
                 end.linkTo(parent.end)
             }
             .padding(bottom = 34.dp), isEnabled = isNextAvailable, text = R.string.next) {
+            val chassis = sharedViewModel.shaseh
+            val motor = sharedViewModel.motor
+            val plateNum = sharedViewModel.plateNum
+            val carColor = sharedViewModel.color
+            val carModel = sharedViewModel.carModel
+            val carYear = sharedViewModel.year
+            val carStatus = if (sharedViewModel.carStatus == "working") "تعمل" else "لاتعمل"
+
+            val description = "تم إضافه بيانات العربيه (" + " ماركه :" + carModel + ", موديل : " + carYear + ", اللون :" + carColor + ", اللوحه : " + plateNum + ", الشاسيه : " + chassis + ", الموتور : " + motor + ", الحاله : " + carStatus + ")"
+            val carDetails = ApiLogItem(
+                plateNum,
+                description = description,
+                type = "car_details",
+                sharedViewModel.selectedOrder?.id?.toInt(),
+            )
+
+            val logArray = ArrayList<ApiLogItem>()
+            logArray.add(carDetails)
+            val logModel = ApiLog(logArray)
+            vmLog.addLogs(logModel)
             goDeviceEntry()
         }
     }

@@ -1,6 +1,8 @@
 package com.queueshub.ui
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.queueshub.domain.model.Maintenance
@@ -44,6 +46,7 @@ class AppViewModel @Inject constructor(
     fun updateUI() {
         onUpdate.value = (0..1_000_000).random()
     }
+
 
     var selectedSensors = mutableListOf<Sensor>()
     var selectedMaintenances = mutableListOf<Maintenance>()

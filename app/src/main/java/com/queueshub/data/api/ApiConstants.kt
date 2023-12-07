@@ -10,6 +10,7 @@ object ApiConstants {
     const val MAINTENANCE_ENDPOINT = "maintenance/getMaintenances"
     const val CREATE_ORDER_ENDPOINT = "orderCar/createOrderCar"
     const val CLOSE_ORDER_ENDPOINT = "order/changeOrderStatusForTechnical"
+    const val LOG_DATA = "systemLog/createSystemLog"
 }
 
 object ApiParameters {

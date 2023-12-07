@@ -28,8 +28,11 @@ import coil.compose.rememberAsyncImagePainter
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.LightGrey
 import com.queueshub.ui.theme.Teal400
@@ -47,6 +50,7 @@ fun OrderTypeScreen(
 
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
     sharedViewModel.onUpdate.value
+    val vmLog: LogsViewModel = hiltViewModel()
 
     val goRemoval: () -> Unit = {
         router?.goDeviceRemove()
@@ -96,6 +100,31 @@ fun OrderTypeScreen(
             text = R.string.next,
             isEnabled = sharedViewModel.orderType != UNDEFINED
         ) {
+
+            var description =  ""
+
+            when (sharedViewModel.orderType) {
+                REMOVE_DEVICE -> description = "تم اختيار غرض فك الجهار"
+                REPAIR_DEVICE -> description = "تم اختيار غرض صيانه "
+                REPLACE_DEVICE -> description = "تم اختيار غرض استبدال ونقل "
+                else -> {
+                    description = "تم اختيار غرض تركيب جهاز جديد "
+                }
+            }
+
+            val orderType = ApiLogItem(
+                sharedViewModel.plateNum,
+                description = description,
+                type = "type",
+                sharedViewModel.selectedOrder?.id?.toInt(),
+            )
+
+            val logArray = ArrayList<ApiLogItem>()
+            logArray.add(orderType)
+            val logModel = ApiLog(logArray)
+            vmLog.addLogs(logModel)
+
+
             when (sharedViewModel.orderType) {
                 REMOVE_DEVICE -> goRemoval()
                 REPAIR_DEVICE -> goRepair()

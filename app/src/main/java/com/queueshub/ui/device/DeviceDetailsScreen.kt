@@ -47,10 +47,13 @@ import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.queueshub.R
 import com.queueshub.data.api.ApiConstants.BASE_URL
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.domain.model.Sensor
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.CameraPreview
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.car.isAvailableGroup
 import com.queueshub.ui.car.showErrorSnackbar
 import com.queueshub.ui.main.*
@@ -66,6 +69,7 @@ fun DeviceDetailsScreen(
     val goSimEntry: () -> Unit = {
         router?.goSimEntry()
     }
+    val vmLog: LogsViewModel = hiltViewModel()
 
     var openCamera by remember { (mutableStateOf(false)) }
     var openImage by remember { (mutableStateOf(false)) }
@@ -271,6 +275,58 @@ fun DeviceDetailsScreen(
                     isEnabled = isNextAvailable,
                     text = R.string.next
                 ) {
+
+                    val imei = sharedViewModel.imei
+                    val deviceSerial = sharedViewModel.serial
+
+                    val imeiLog = ApiLogItem(
+                        sharedViewModel.plateNum,
+                        description = "رقم الهويه: " + imei,
+                        type = "device_imei",
+                        sharedViewModel.selectedOrder?.id?.toInt(),
+                    )
+                    val serialLog = ApiLogItem(
+                        sharedViewModel.plateNum,
+                        description = "رقم مسلسل الجهاز:  " + deviceSerial,
+                        type = "device_serial",
+                        sharedViewModel.selectedOrder?.id?.toInt(),
+                    )
+
+
+                    val status = if (sharedViewModel.isSupplied==0){
+                        " تركيب الجهاز فقط"
+                    }else " توريد الجهاز فقط"
+
+                    val deviceLog = ApiLogItem(
+                        sharedViewModel.plateNum,
+                        description = status,
+                        type = "device_supplied",
+                        sharedViewModel.selectedOrder?.id?.toInt(),
+                    )
+
+                    val sensorsLogs = ArrayList<ApiLogItem>()
+                    for (sensor in sharedViewModel.selectedSensors){
+                        val description = if(sensor.isTawreed) " تم توريد الحساس: "
+                        else " فقط تم تركيب الحساس: "
+
+                        sensorsLogs.add(ApiLogItem(
+                            sharedViewModel.plateNum,
+                            description = description + sensor.name ,
+                            type = "sensor",
+                            sharedViewModel.selectedOrder?.id?.toInt(),
+                        ))
+                    }
+
+
+
+
+                    val logArray = ArrayList<ApiLogItem>()
+                    logArray.add(imeiLog)
+                    logArray.add(serialLog)
+                    logArray.add(deviceLog)
+                    logArray.addAll(sensorsLogs)
+                    val logModel = ApiLog(logArray)
+                    vmLog.addLogs(logModel)
                     goSimEntry()
                 }
             }

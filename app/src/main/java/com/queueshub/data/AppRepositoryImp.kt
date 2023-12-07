@@ -1,7 +1,9 @@
 package com.queueshub.data
 
 import arrow.core.Either
+import com.google.gson.Gson
 import com.queueshub.data.api.NetworkApi
+import com.queueshub.data.api.model.ApiLog
 import com.queueshub.data.api.model.mapToDomain
 import com.queueshub.data.local.LocalSource
 import com.queueshub.domain.model.*
@@ -56,6 +58,14 @@ class AppRepositoryImp @Inject constructor(
         }
     }
 
+    override suspend fun logData(data: ApiLog): Either<IOException, Boolean> {
+        return try {
+            api.logData(local.getToken(), data)
+            Either.Right(true)
+        } catch (exception: IOException) {
+            Either.Left(exception)
+        }
+    }
     override suspend fun getMyOrders(id: Long): Either<IOException, List<Car>?> {
         return try {
             val results = api.getMyCurrentOrders(local.getToken(), id)
@@ -386,5 +396,7 @@ class AppRepositoryImp @Inject constructor(
             Either.Left(exception)
         }
     }
+
+
 
 }

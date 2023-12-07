@@ -12,8 +12,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.DialogBoxLoading
 import com.queueshub.ui.navigation.Router
@@ -26,6 +29,7 @@ fun OrderNoteScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
     val context = LocalContext.current
 
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
+    val vmLog: LogsViewModel = hiltViewModel(context as MainActivity)
     sharedViewModel.onUpdate.value
 
     val goDone: () -> Unit = {
@@ -34,6 +38,17 @@ fun OrderNoteScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
 
     val uiState by sharedViewModel.state.collectAsState()
     if (uiState.success) {
+        val logDetails = ApiLogItem(
+            sharedViewModel.plateNum,
+            description = "تم الاإنتهاء من السياره ",
+            type = "done",
+            sharedViewModel.selectedOrder?.id?.toInt(),
+        )
+
+        val logArray = ArrayList<ApiLogItem>()
+        logArray.add(logDetails)
+        val logModel = ApiLog(logArray)
+        vmLog.addLogs(logModel)
         goDone()
         sharedViewModel.setStateToIdle()
     }

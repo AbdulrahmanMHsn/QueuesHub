@@ -20,12 +20,15 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
-import com.queueshub.ui.main.AppButton
-import com.queueshub.ui.main.OrderTypeWidget
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.car.isAvailableGroup
+import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.DialogBoxLoading
+import com.queueshub.ui.main.OrderTypeWidget
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.*
 import com.queueshub.utils.*
@@ -37,6 +40,7 @@ fun DeviceRemovalScreen(
 ) {
     val context = LocalContext.current
     val viewModel: AppViewModel = hiltViewModel(context as MainActivity)
+    val vmLog: LogsViewModel = hiltViewModel()
     viewModel.onUpdate.value
 
     val goNote: () -> Unit = {
@@ -48,7 +52,8 @@ fun DeviceRemovalScreen(
 
     if (uiState.loading) {
         Box(
-            contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()
+            contentAlignment = Alignment.Center,
+            modifier = Modifier.fillMaxSize(),
         ) {
             DialogBoxLoading()
         }
@@ -57,24 +62,28 @@ fun DeviceRemovalScreen(
         val content = it.getContentIfNotHandled()
         content?.let {
             Toast.makeText(
-                context, it.localizedMessage, Toast.LENGTH_SHORT
+                context,
+                it.localizedMessage,
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }
     ConstraintLayout(
         modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(rememberScrollState()),
     ) {
         val (title, notWorking, working, subtitle, owner, next) = createRefs()
         Text(
-            text = "حالة الجهاز", modifier = Modifier
+            text = "حالة الجهاز",
+            modifier = Modifier
                 .padding(top = 56.dp)
                 .constrainAs(title) {
                     top.linkTo(parent.top)
                     start.linkTo(parent.start)
                     end.linkTo(parent.end)
-                }, style = MaterialTheme.typography.subtitle1
+                },
+            style = MaterialTheme.typography.subtitle1,
         )
 
         isAvailableGroup(
@@ -115,35 +124,58 @@ fun DeviceRemovalScreen(
             viewModel.removeDeviceStatus = isWorking
             viewModel.updateUI()
         }
-        Text(modifier = Modifier
-            .constrainAs(subtitle) {
-                top.linkTo(working.bottom)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-            .padding(vertical = 19.dp, horizontal = 16.dp),
+        Text(
+            modifier = Modifier
+                .constrainAs(subtitle) {
+                    top.linkTo(working.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+                .padding(vertical = 19.dp, horizontal = 16.dp),
             text = "الجهاز مع",
-            style = MaterialTheme.typography.subtitle1)
-        MultiToggleButton(modifier = Modifier
-            .constrainAs(owner) {
-                top.linkTo(subtitle.bottom)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-            .padding(vertical = 19.dp, horizontal = 16.dp),
+            style = MaterialTheme.typography.subtitle1,
+        )
+        MultiToggleButton(
+            modifier = Modifier
+                .constrainAs(owner) {
+                    top.linkTo(subtitle.bottom)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+                .padding(vertical = 19.dp, horizontal = 16.dp),
             viewModel = viewModel,
             onToggleChange = {
                 viewModel.removeDeviceWith = it
                 viewModel.updateUI()
-            })
+            },
+        )
 
         AppButton(
             modifier = Modifier.constrainAs(next) {
-                    bottom.linkTo(parent.bottom, margin = 24.dp, goneMargin = 24.dp)
-                    start.linkTo(parent.start)
-                    end.linkTo(parent.end)
-                }, text = R.string.next
+                bottom.linkTo(parent.bottom, margin = 24.dp, goneMargin = 24.dp)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            },
+            text = R.string.next,
         ) {
+            var description = "(الاختيار داخل الغرض فك الجهاز) :"
+
+            val deviceStatus = if (viewModel.removeDeviceStatus == "working") "تعمل" else "لاتعمل"
+
+            description = description + " حاله الجهاز: " + deviceStatus + " الجهاز مع : " + viewModel.removeDeviceWith
+
+            val orderType = ApiLogItem(
+                viewModel.plateNum,
+                description = description,
+                type = "inside_type",
+                viewModel.selectedOrder?.id?.toInt(),
+            )
+
+            val logArray = ArrayList<ApiLogItem>()
+            logArray.add(orderType)
+            val logModel = ApiLog(logArray)
+            vmLog.addLogs(logModel)
+
             viewModel.saveOrderType(arrayListOf("فك"))
             goNote()
         }
@@ -152,11 +184,13 @@ fun DeviceRemovalScreen(
 
 @Composable
 fun MultiToggleButton(
-    viewModel: AppViewModel, modifier: Modifier, onToggleChange: (String) -> Unit
+    viewModel: AppViewModel,
+    modifier: Modifier,
+    onToggleChange: (String) -> Unit,
 ) {
     var currentSelection = viewModel.removeDeviceWith
     Column(
-        modifier = modifier
+        modifier = modifier,
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             val isWithClient = currentSelection == WITH_CLIENT
@@ -167,7 +201,7 @@ fun MultiToggleButton(
                 WITH_CLIENT,
                 R.drawable.with_client_selected,
                 R.drawable.with_client,
-                stringResource(id = R.string.with_client)
+                stringResource(id = R.string.with_client),
             ) {
                 currentSelection = it
                 onToggleChange(it)
@@ -179,12 +213,11 @@ fun MultiToggleButton(
                 WITH_INFINITY,
                 R.drawable.infinity,
                 R.drawable.infinity,
-                stringResource(id = R.string.with_infinity)
+                stringResource(id = R.string.with_infinity),
             ) {
                 currentSelection = it
                 onToggleChange(it)
             }
-
         }
     }
 }

@@ -34,10 +34,13 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.CameraBarcodePreview
 import com.queueshub.ui.CameraPreview
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.car.openCamera
 import com.queueshub.ui.car.showErrorSnackbar
 import com.queueshub.ui.main.*
@@ -70,6 +73,7 @@ fun DeviceEntryScreen(
     var deviceImage: File? by rememberSaveable { (mutableStateOf(viewModel.deviceImage)) }
     var openImage by rememberSaveable { (mutableStateOf(false)) }
     var openedImage: Bitmap? by rememberSaveable { mutableStateOf(null) }
+    val vmLog: LogsViewModel = hiltViewModel()
 
     BackHandler(openCamera||openScanner||openImage) {
         openCamera = false
@@ -247,6 +251,19 @@ fun DeviceEntryScreen(
                     .padding(bottom = 34.dp),
                 text = R.string.next, isEnabled = nextAvailable,
             ) {
+
+                val description =  "تم تصوير الجهاز"
+                val deviceDetails = ApiLogItem(
+                    viewModel.plateNum,
+                    description = description,
+                    type = "device",
+                    viewModel.selectedOrder?.id?.toInt(),
+                )
+
+                val logArray = ArrayList<ApiLogItem>()
+                logArray.add(deviceDetails)
+                val logModel = ApiLog(logArray)
+                vmLog.addLogs(logModel)
                 goDeviceDetails()
             }
         }

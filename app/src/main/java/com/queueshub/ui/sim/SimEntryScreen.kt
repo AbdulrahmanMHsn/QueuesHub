@@ -33,7 +33,10 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.*
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.car.showErrorSnackbar
 import com.queueshub.ui.device.DeviceCardContent
 import com.queueshub.ui.main.*
@@ -65,6 +68,7 @@ fun SimEntryScreen(
     var simImage: File? by rememberSaveable { (mutableStateOf(viewModel.simImage )) }
     var openImage by rememberSaveable { (mutableStateOf(false)) }
     var openedImage: Bitmap? by rememberSaveable { mutableStateOf(null) }
+    val vmLog: LogsViewModel = hiltViewModel()
 
     BackHandler(openCameraSim||openScanner||openImage) {
         openCameraSim = false
@@ -254,6 +258,19 @@ fun SimEntryScreen(
                     .padding(bottom = 34.dp),
                 text = R.string.next, isEnabled = nextAvailable,
             ) {
+                val description =  "تم تصوير الشريحه"
+                val simDetails = ApiLogItem(
+                    viewModel.plateNum,
+                    description = description,
+                    type = "sim",
+                    viewModel.selectedOrder?.id?.toInt(),
+                )
+
+                val logArray = ArrayList<ApiLogItem>()
+                logArray.add(simDetails)
+                val logModel = ApiLog(logArray)
+                vmLog.addLogs(logModel)
+
                 goSimDetails()
             }
         }

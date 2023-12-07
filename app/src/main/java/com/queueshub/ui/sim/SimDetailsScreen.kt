@@ -24,8 +24,11 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.car.isAvailableGroup
 import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.AppDropdownMenu
@@ -45,6 +48,7 @@ fun SimDetailsScreen(
     }
     val context = LocalContext.current
     val viewModel: AppViewModel = hiltViewModel(context as MainActivity)
+    val vmLog: LogsViewModel = hiltViewModel()
     var TawreedSim: Int by rememberSaveable { mutableStateOf(0) }
     viewModel.processSimImage()
     ConstraintLayout(
@@ -169,6 +173,22 @@ fun SimDetailsScreen(
                 end.linkTo(parent.end)
             }
             .padding(bottom = 34.dp), isEnabled = isNextAvailable, text = R.string.next) {
+
+
+            val simSerial = viewModel.simSerial
+
+            val serialLog = ApiLogItem(
+                viewModel.plateNum,
+                description = "رقم مسلسل الشريحه:  " + simSerial,
+                type = "sim_serial",
+                viewModel.selectedOrder?.id?.toInt(),
+            )
+
+            val logArray = ArrayList<ApiLogItem>()
+            logArray.add(serialLog)
+            val logModel = ApiLog(logArray)
+            vmLog.addLogs(logModel)
+
             goOrderType()
         }
     }

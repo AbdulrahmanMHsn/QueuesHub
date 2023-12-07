@@ -68,6 +68,12 @@ interface NetworkApi {
         @Field("received_amount") received_amount: Int = 0,
         ): Response<Unit>
 
+    @POST(ApiConstants.LOG_DATA)
+    suspend fun logData(
+        @Header("Authorization") authHeader: String,
+        @Body() logs: ApiLog ,
+        ): Response<Unit>
+
     fun validateImei(token: String, imei: String): Any {
         TODO("Not yet implemented")
     }

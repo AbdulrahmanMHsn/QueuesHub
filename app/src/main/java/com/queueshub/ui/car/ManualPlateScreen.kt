@@ -40,6 +40,8 @@ import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.CameraPreview
 import com.queueshub.ui.MainActivity
@@ -74,6 +76,8 @@ fun ManualPlateScreen(
     val viewModel: CarViewModel = hiltViewModel()
     val modelsState by viewModel.state.collectAsState()
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
+    val vmLog: LogsViewModel = hiltViewModel()
+
 
     sharedViewModel.onUpdate.value
     var openImage by rememberSaveable { (mutableStateOf(false)) }
@@ -273,6 +277,22 @@ fun ManualPlateScreen(
                     end.linkTo(parent.end)
                 }
                 .padding(bottom = 34.dp), text = R.string.next, isEnabled = isNextAvailable) {
+
+                val chassis = sharedViewModel.shaseh
+                val carModel = sharedViewModel.carModel
+
+                val description = "تم تصوير الشاسيه رقم :  " + chassis + " ماركه:  " + carModel
+                val carDetails = ApiLogItem(
+                    sharedViewModel.plateNum,
+                    description = description,
+                    type = "chasiss",
+                    sharedViewModel.selectedOrder?.id?.toInt(),
+                )
+
+                val logArray = ArrayList<ApiLogItem>()
+                logArray.add(carDetails)
+                val logModel = ApiLog(logArray)
+                vmLog.addLogs(logModel)
                 goDeviceEntry()
             }
         }

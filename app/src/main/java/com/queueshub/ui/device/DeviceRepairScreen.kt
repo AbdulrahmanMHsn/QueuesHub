@@ -27,10 +27,13 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.domain.model.Maintenance
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.CameraPreview
 import com.queueshub.ui.MainActivity
+import com.queueshub.ui.car.LogsViewModel
 import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.DialogBoxLoading
 import com.queueshub.ui.main.InputField
@@ -55,6 +58,7 @@ fun DeviceRepairScreen(
 
     val context = LocalContext.current
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
+    val vmLog: LogsViewModel = hiltViewModel()
 
     val uiState by sharedViewModel.state.collectAsState()
 
@@ -225,6 +229,29 @@ fun DeviceRepairScreen(
                         end.linkTo(parent.end)
                     }, text = R.string.done, isEnabled = nextAvailable
                 ) {
+
+
+                    val orderType = ApiLogItem(
+                        sharedViewModel.plateNum,
+                        description = "(الاختيار داخل الغرض صيانه الجهاز) :",
+                        type = "inside_type",
+                        sharedViewModel.selectedOrder?.id?.toInt(),
+                    )
+
+                    val logArray = ArrayList<ApiLogItem>()
+
+                    for (item in sharedViewModel.selectedMaintenances){
+                        logArray.add(ApiLogItem(
+                            sharedViewModel.plateNum,
+                            description = item.name ,
+                            type = "inside_type",
+                            sharedViewModel.selectedOrder?.id?.toInt(),
+                        ))
+                    }
+                    logArray.add(orderType)
+                    val logModel = ApiLog(logArray)
+                    vmLog.addLogs(logModel)
+
                     sharedViewModel.saveOrderType(arrayListOf("صيانة"))
                     goNote()
                 }

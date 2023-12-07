@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -43,8 +44,11 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ChainStyle
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.queueshub.BuildConfig
 import com.queueshub.R
+import com.queueshub.data.api.model.ApiLog
+import com.queueshub.data.api.model.ApiLogItem
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.CameraPreview
 import com.queueshub.ui.MainActivity
@@ -54,17 +58,21 @@ import com.queueshub.ui.theme.DarkRed
 import com.queueshub.ui.theme.SpanishGreen
 import com.queueshub.utils.*
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
-
 
 @ExperimentalGetImage
 @Composable
 fun CarInfoScreen(
-    scaffoldState: ScaffoldState? = null, router: Router? = null
+    scaffoldState: ScaffoldState? = null,
+    router: Router? = null,
 ) {
     val context = LocalContext.current
     val viewModel: AppViewModel = hiltViewModel(context as MainActivity)
+
+    val vmLog: LogsViewModel = hiltViewModel()
+
     var plateAvailable: Int by rememberSaveable { mutableStateOf(-1) }
     var licenseAvailable: Int by rememberSaveable { mutableStateOf(-1) }
     var nextAvailable = viewModel.isNextCarInfoAvailable(plateAvailable, licenseAvailable)
@@ -86,6 +94,12 @@ fun CarInfoScreen(
     val goConfirmation: () -> Unit = {
         router?.goInfoConfirmation()
     }
+
+    val uiState by vmLog.state.collectAsState()
+
+
+
+
     BackHandler(openCamera || openImage) {
         openCamera = false
         openImage = false
@@ -96,7 +110,7 @@ fun CarInfoScreen(
             showLoading = true
         }, onTryAgain = {}) { string, image ->
             showLoading = false
-            Log.e("camera", "opening camera ${string}")
+            Log.e("camera", "opening camera $string")
             if (cameraType == CameraType.CAR_PLATE) {
                 Log.e("camera", "finished camera")
                 plateImage = image
@@ -117,16 +131,14 @@ fun CarInfoScreen(
             nextAvailable = viewModel.isNextCarInfoAvailable(plateAvailable, licenseAvailable)
         }
         if (showLoading) {
-
             Box(
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center,
             ) {
                 DialogBoxLoading()
             }
         }
     } else if (openImage && openedImage != null) {
         Box {
-
             Image(
                 modifier = Modifier.fillMaxSize(),
                 bitmap = openedImage!!.asImageBitmap(),
@@ -139,7 +151,6 @@ fun CarInfoScreen(
                     .padding(bottom = 20.dp),
                 onClick = {
                     openImage = false
-
                 },
                 content = {
                     Icon(
@@ -149,25 +160,28 @@ fun CarInfoScreen(
                         modifier = Modifier
                             .size(100.dp)
                             .padding(1.dp)
-                            .border(1.dp, Color.White, CircleShape)
+                            .border(1.dp, Color.White, CircleShape),
                     )
-                })
+                },
+            )
         }
     } else {
         ConstraintLayout(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
         ) {
             val (title, subtitle, plate, license, next) = createRefs()
             Text(
-                text = "بيانات العربية", modifier = Modifier
+                text = "بيانات العربية",
+                modifier = Modifier
                     .padding(top = 56.dp)
                     .constrainAs(title) {
                         top.linkTo(parent.top)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
-                    }, style = MaterialTheme.typography.subtitle1
+                    },
+                style = MaterialTheme.typography.subtitle1,
             )
             Text(
                 modifier = Modifier.constrainAs(subtitle) {
@@ -176,7 +190,7 @@ fun CarInfoScreen(
                     end.linkTo(parent.end)
                 },
                 text = "التقط صور لوحة العربية ورخصة العربية",
-                style = MaterialTheme.typography.subtitle2
+                style = MaterialTheme.typography.subtitle2,
             )
 
             CarInfoCardContent(
@@ -206,7 +220,8 @@ fun CarInfoScreen(
                 }, openImage = {
                     openImage = true
                     openedImage = it
-                })
+                },
+            )
             CarInfoCardContent(
                 Modifier
                     .constrainAs(license) {
@@ -235,19 +250,57 @@ fun CarInfoScreen(
                 }, openImage = {
                     openImage = true
                     openedImage = it
-                })
-            AppButton(modifier = Modifier
-                .constrainAs(next) {
-                    bottom.linkTo(parent.bottom, margin = 24.dp)
-                    top.linkTo(license.bottom, margin = 24.dp)
-                }
-                .padding(bottom = 34.dp), text = R.string.next, isEnabled = nextAvailable) {
+                },
+            )
+            AppButton(
+                modifier = Modifier
+                    .constrainAs(next) {
+                        bottom.linkTo(parent.bottom, margin = 24.dp)
+                        top.linkTo(license.bottom, margin = 24.dp)
+                    }
+                    .padding(bottom = 34.dp),
+                text = R.string.next,
+                isEnabled = nextAvailable,
+            ) {
                 if (plateAvailable == 0) {
                     goManualPlate()
                 } else if (licenseAvailable == 0) {
                     goManualLicense()
                 } else {
+                    // ////////////////////////////// Add Logs //////////////////////////////////
+                   //0 goConfirmation()
+                    var pAvailable = "تم تصوير اللوحة"
+                    pAvailable = if (plateAvailable == 1) {
+                        "تم تصوير اللوحة"
+                    } else {
+                        "اللوحة غير متاحة"
+                    }
+
+                    var lAvailable = "تم تصوير الرخصه"
+                    lAvailable = if (plateAvailable == 1) {
+                        "تم تصوير الرخصه"
+                    } else {
+                        "الرخصه غير متاحة"
+                    }
+                    val carPlate = ApiLogItem(
+                        viewModel.plateNum,
+                        description = pAvailable,
+                        type = "plate",
+                        viewModel.selectedOrder?.id?.toInt(),
+                    )
+                    val carLicence = ApiLogItem(
+                        viewModel.plateNum,
+                        description = lAvailable,
+                        type = "license",
+                        viewModel.selectedOrder?.id?.toInt(),
+                    )
+                    val logArray = ArrayList<ApiLogItem>()
+                    logArray.add(carPlate)
+                    logArray.add(carLicence)
+                    val logModel = ApiLog(logArray)
+                    vmLog.addLogs(logModel)
                     goConfirmation()
+                    // ////////////////////////////// Add Logs //////////////////////////////////
                 }
             }
         }
@@ -267,14 +320,14 @@ fun CarInfoCardContent(
     @StringRes negativeText: Int,
     isAvailable: (Boolean) -> Unit,
     openCameraPreview: (Boolean) -> Unit,
-    openImage: (Bitmap) -> Unit
+    openImage: (Bitmap) -> Unit,
 ) {
     var alertVisibility by rememberSaveable { (mutableStateOf(false)) }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
+        ActivityResultContracts.RequestPermission(),
     ) { isGranted: Boolean ->
         if (isGranted) {
             openCameraPreview(true)
@@ -288,17 +341,22 @@ fun CarInfoCardContent(
             .border(
                 1.dp,
                 if (imageBitmap != null) SpanishGreen else Color.White,
-                RoundedCornerShape(4.dp)
+                RoundedCornerShape(4.dp),
             )
-            .background(Color.White, RoundedCornerShape(4.dp))
+            .background(Color.White, RoundedCornerShape(4.dp)),
     ) {
         // Create references for the composables to constrain
         val (text, done, available, notAvailable, pic, button) = createRefs()
-        if (imageBitmap != null)
-            Image(modifier = Modifier.constrainAs(done) {
-                top.linkTo(parent.top)
-                start.linkTo(parent.start)
-            }, painter = painterResource(id = R.drawable.group_26), contentDescription = "")
+        if (imageBitmap != null) {
+            Image(
+                modifier = Modifier.constrainAs(done) {
+                    top.linkTo(parent.top)
+                    start.linkTo(parent.start)
+                },
+                painter = painterResource(id = R.drawable.group_26),
+                contentDescription = "",
+            )
+        }
         Text(
             text = stringResource(id = title),
             modifier = Modifier.constrainAs(text) {
@@ -323,7 +381,7 @@ fun CarInfoCardContent(
             DarkRed,
             Icons.Default.Clear,
             negativeText,
-            isEnabled
+            isEnabled,
         ) {
             isAvailable(it)
         }
@@ -341,17 +399,18 @@ fun CarInfoCardContent(
             SpanishGreen,
             Icons.Default.Check,
             R.string.available,
-            isEnabled
+            isEnabled,
         ) {
             isAvailable(it)
         }
-        Column(modifier = Modifier.constrainAs(pic) {
-            top.linkTo(available.bottom, margin = 32.dp)
-            end.linkTo(parent.end, margin = 32.dp)
-            start.linkTo(parent.start, margin = 32.dp)
-        }) {
+        Column(
+            modifier = Modifier.constrainAs(pic) {
+                top.linkTo(available.bottom, margin = 32.dp)
+                end.linkTo(parent.end, margin = 32.dp)
+                start.linkTo(parent.start, margin = 32.dp)
+            },
+        ) {
             if (imageBitmap != null) {
-
                 Image(
                     modifier = Modifier.clickable { openImage(imageBitmap) },
                     bitmap = imageBitmap.asImageBitmap(),
@@ -375,20 +434,20 @@ fun CarInfoCardContent(
             }
         }
 
-        AppIconButton(onSubmit = {
-            checkCameraPermissionOrOpenCam(context, {
-                launcher.launch(
-                    Manifest.permission.CAMERA
-                )
-            }, {
-                alertVisibility = true
-            }, {
-                openCameraPreview(true)
-                openCamera() {
-
-                }
-            })
-        },
+        AppIconButton(
+            onSubmit = {
+                checkCameraPermissionOrOpenCam(context, {
+                    launcher.launch(
+                        Manifest.permission.CAMERA,
+                    )
+                }, {
+                    alertVisibility = true
+                }, {
+                    openCameraPreview(true)
+                    openCamera() {
+                    }
+                })
+            },
             // Assign reference "button" to the Button composable
             // and constrain it to the top of the ConstraintLayout
             modifier = Modifier
@@ -400,9 +459,11 @@ fun CarInfoCardContent(
                 .padding(horizontal = 40.dp)
                 .padding(bottom = 12.dp),
             isEnabled = availability == 1,
-            icon = Icons.Default.PhotoCamera)
+            icon = Icons.Default.PhotoCamera,
+        )
     }
-    showAlert(alertVisibility,
+    showAlert(
+        alertVisibility,
         R.string.camera_permission_disclosure,
         R.string.camera_permission_desc,
         R.string.cancel,
@@ -410,33 +471,37 @@ fun CarInfoCardContent(
         {
             alertVisibility = false
             launcher.launch(
-                Manifest.permission.CAMERA
+                Manifest.permission.CAMERA,
             )
-
         },
         {
             alertVisibility = false
             showErrorSnackbar(context, coroutineScope, scaffoldState)
-        })
+        },
+    )
 }
 
 fun showErrorSnackbar(
-    context: Context, coroutineScope: CoroutineScope, scaffoldState: ScaffoldState?
+    context: Context,
+    coroutineScope: CoroutineScope,
+    scaffoldState: ScaffoldState?,
 ) {
-
     coroutineScope.launch { // using the `coroutineScope` to `launch` showing the snackbar
         // taking the `snackbarHostState` from the attached `scaffoldState`
         val snackbarResult = scaffoldState?.snackbarHostState?.showSnackbar(
-            message = "This is your message", actionLabel = "Do something."
+            message = "This is your message",
+            actionLabel = "Do something.",
         )
         when (snackbarResult) {
             SnackbarResult.Dismissed -> Logger.d("Dismissed")
             SnackbarResult.ActionPerformed -> {
-                context.startActivity(Intent().apply {
-                    action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                    data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                })
+                context.startActivity(
+                    Intent().apply {
+                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    },
+                )
             }
 
             else -> {}
@@ -445,7 +510,7 @@ fun showErrorSnackbar(
 }
 
 fun openCamera(
-    imageUploaded: () -> Unit
+    imageUploaded: () -> Unit,
 ) {
     imageUploaded()
 }
@@ -471,19 +536,19 @@ fun isAvailableGroup(
             })
             .border(1.dp, if (enabled) color else Color.Gray, RoundedCornerShape(4.dp))
             .background(if (isSelected) color else Color.White, shape = RoundedCornerShape(4.dp))
-            .padding(vertical = 7.dp, horizontal = 16.dp)
+            .padding(vertical = 7.dp, horizontal = 16.dp),
     ) {
         Text(
             style = MaterialTheme.typography.subtitle2,
             color = if (enabled) if (isSelected) Color.White else color else Color.Gray,
             text = stringResource(id = text),
             maxLines = 1,
-            fontSize = fontSize
+            fontSize = fontSize,
         )
         Icon(
             icon,
             contentDescription = "",
-            tint = if (enabled) if (isSelected) Color.White else color else Color.Gray
+            tint = if (enabled) if (isSelected) Color.White else color else Color.Gray,
         )
     }
 }
@@ -498,7 +563,8 @@ fun CarInfoScreenPreview() {
 @Preview(locale = "ar")
 @Composable
 fun isAvailableGroupPreview() {
-    isAvailableGroup(modifier = Modifier.background(Color(0xFFE9E9E9)),
+    isAvailableGroup(
+        modifier = Modifier.background(Color(0xFFE9E9E9)),
         false,
         true,
         Color.Green,
@@ -506,8 +572,10 @@ fun isAvailableGroupPreview() {
         R.string.available,
         true,
         fontSize = 16.sp,
-        {})
-    isAvailableGroup(modifier = Modifier.background(Color(0xFFE9E9E9)),
+        {},
+    )
+    isAvailableGroup(
+        modifier = Modifier.background(Color(0xFFE9E9E9)),
         false,
         false,
         Color.Red,
@@ -515,5 +583,6 @@ fun isAvailableGroupPreview() {
         R.string.available,
         false,
         fontSize = 16.sp,
-        {})
+        {},
+    )
 }
