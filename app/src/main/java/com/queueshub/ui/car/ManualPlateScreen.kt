@@ -281,7 +281,7 @@ fun ManualPlateScreen(
                 val chassis = sharedViewModel.shaseh
                 val carModel = sharedViewModel.carModel
 
-                val description = "تم تصوير الشاسيه رقم :  " + chassis + " ماركه:  " + carModel
+                val description = "تم تصوير الشاسيه رقم :  " + chassis + ", ماركه:  " + carModel
                 val carDetails = ApiLogItem(
                     sharedViewModel.plateNum,
                     description = description,
