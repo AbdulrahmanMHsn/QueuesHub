@@ -20,5 +20,8 @@ data class ApiLogItem(
 	val type: String? = null,
 
 	@field:SerializedName("order_id")
-	val orderId: Int? = null
+	val orderId: Int? = null,
+
+	@field:SerializedName("id")
+	val generatedId: String? = null
 )

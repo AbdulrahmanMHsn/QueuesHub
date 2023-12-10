@@ -1,5 +1,6 @@
 package com.queueshub.ui
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.IOException
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +35,7 @@ class AppViewModel @Inject constructor(
     orderStarted: GetOrderStarted,
     val createOrder: CreateOrder
 ) : ViewModel() {
+    var generatedId: String?= null
     var goingBack: Boolean= false
     private lateinit var finalOrderType: java.util.ArrayList<String>
     var selectedOrder: Order? = null
@@ -43,6 +46,10 @@ class AppViewModel @Inject constructor(
     var licenseAuto = false
     var onUpdate = mutableStateOf(0)
 
+
+    fun generateUUID(){
+       generatedId =  UUID.randomUUID().toString()
+    }
     fun updateUI() {
         onUpdate.value = (0..1_000_000).random()
     }
@@ -344,7 +351,7 @@ class AppViewModel @Inject constructor(
         licenseAvailable == 0 || (licenseAvailable == 1 && licenseImage != null && licenseImage2 != null)
 
     fun clearData() {
-
+        generatedId = null
         plateText = ""
         simText = ""
         licenseText2 = ""

@@ -287,6 +287,7 @@ fun ManualPlateScreen(
                     description = description,
                     type = "chasiss",
                     sharedViewModel.selectedOrder?.id?.toInt(),
+                    generatedId =sharedViewModel.generatedId,
                 )
 
                 val logArray = ArrayList<ApiLogItem>()

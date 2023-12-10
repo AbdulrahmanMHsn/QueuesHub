@@ -182,6 +182,7 @@ fun SimDetailsScreen(
                 description = "رقم مسلسل الشريحه:  " + simSerial,
                 type = "sim_serial",
                 viewModel.selectedOrder?.id?.toInt(),
+                generatedId =viewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()

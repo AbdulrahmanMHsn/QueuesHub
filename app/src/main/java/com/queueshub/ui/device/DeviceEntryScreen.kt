@@ -258,6 +258,7 @@ fun DeviceEntryScreen(
                     description = description,
                     type = "device",
                     viewModel.selectedOrder?.id?.toInt(),
+                    generatedId =viewModel.generatedId,
                 )
 
                 val logArray = ArrayList<ApiLogItem>()

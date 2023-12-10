@@ -47,6 +47,7 @@ import com.queueshub.domain.model.Car
 import com.queueshub.domain.model.Order
 import com.queueshub.ui.main.InputField
 import com.queueshub.ui.theme.*
+import java.util.UUID
 
 
 @Composable
@@ -55,10 +56,16 @@ fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
     val context = LocalContext.current
 
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
-    sharedViewModel.clearData()
+
     val viewModel: OrdersViewModel = hiltViewModel()
     val ordersState by viewModel.carsState.collectAsState()
+
+    LaunchedEffect(key1 = 0) {
+        sharedViewModel.clearData()
+    }
+
     val goCarInfo: () -> Unit = {
+        sharedViewModel.generatedId = UUID.randomUUID().toString()
         router?.goCarInfo()
     }
     val goAllOrders: () -> Unit = {
@@ -78,7 +85,7 @@ fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
             sharedViewModel.orderId = sharedViewModel.selectedOrder?.id ?: 0
             sharedViewModel.selectedOrder?.let { it1 ->
                 orderCarsContent(
-                    viewModel, it1, it, goCarInfo, goOrderInfo,goAllOrders
+                    viewModel,sharedViewModel, it1, it, goCarInfo, goOrderInfo,goAllOrders
                 )
             }
         } ?: run {
@@ -110,6 +117,7 @@ fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
 @Composable
 fun orderCarsContent(
     viewmodel: OrdersViewModel,
+    sharedViewModel: AppViewModel,
     order: Order,
     cars: List<Car>,
     goCarInfo: () -> Unit,

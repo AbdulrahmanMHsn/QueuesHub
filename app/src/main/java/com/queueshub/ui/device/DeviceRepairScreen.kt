@@ -236,6 +236,7 @@ fun DeviceRepairScreen(
                         description = "(الاختيار داخل الغرض صيانه الجهاز) :",
                         type = "inside_type",
                         sharedViewModel.selectedOrder?.id?.toInt(),
+                        generatedId =sharedViewModel.generatedId,
                     )
 
                     val logArray = ArrayList<ApiLogItem>()
@@ -246,6 +247,7 @@ fun DeviceRepairScreen(
                             description = item.name ,
                             type = "inside_type",
                             sharedViewModel.selectedOrder?.id?.toInt(),
+                            generatedId =sharedViewModel.generatedId,
                         ))
                     }
                     logArray.add(orderType)

@@ -169,6 +169,7 @@ fun DeviceRemovalScreen(
                 description = description,
                 type = "inside_type",
                 viewModel.selectedOrder?.id?.toInt(),
+                generatedId =viewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()

@@ -264,6 +264,7 @@ fun SimEntryScreen(
                     description = description,
                     type = "sim",
                     viewModel.selectedOrder?.id?.toInt(),
+                    generatedId =viewModel.generatedId,
                 )
 
                 val logArray = ArrayList<ApiLogItem>()

@@ -284,12 +284,14 @@ fun DeviceDetailsScreen(
                         description = "رقم الهويه: " + imei,
                         type = "device_imei",
                         sharedViewModel.selectedOrder?.id?.toInt(),
+                        generatedId =sharedViewModel.generatedId,
                     )
                     val serialLog = ApiLogItem(
                         sharedViewModel.plateNum,
                         description = "رقم مسلسل الجهاز:  " + deviceSerial,
                         type = "device_serial",
                         sharedViewModel.selectedOrder?.id?.toInt(),
+                        generatedId =sharedViewModel.generatedId,
                     )
 
 
@@ -302,6 +304,7 @@ fun DeviceDetailsScreen(
                         description = status,
                         type = "device_supplied",
                         sharedViewModel.selectedOrder?.id?.toInt(),
+                        generatedId =sharedViewModel.generatedId,
                     )
 
                     val sensorsLogs = ArrayList<ApiLogItem>()
@@ -314,6 +317,7 @@ fun DeviceDetailsScreen(
                             description = description + sensor.name ,
                             type = "sensor",
                             sharedViewModel.selectedOrder?.id?.toInt(),
+                            generatedId =sharedViewModel.generatedId,
                         ))
                     }
 

@@ -95,7 +95,6 @@ fun CarInfoScreen(
         router?.goInfoConfirmation()
     }
 
-    val uiState by vmLog.state.collectAsState()
 
 
 
@@ -262,6 +261,8 @@ fun CarInfoScreen(
                 text = R.string.next,
                 isEnabled = nextAvailable,
             ) {
+                Log.d("MyDebugData"," : CarInfoScreen :  " +  viewModel.generatedId  );
+
                 if (plateAvailable == 0) {
                     goManualPlate()
                 } else if (licenseAvailable == 0) {
@@ -269,6 +270,7 @@ fun CarInfoScreen(
                 } else {
                     // ////////////////////////////// Add Logs //////////////////////////////////
                    //0 goConfirmation()
+
                     var pAvailable = "تم تصوير اللوحة"
                     pAvailable = if (plateAvailable == 1) {
                         "تم تصوير اللوحة"
@@ -287,13 +289,15 @@ fun CarInfoScreen(
                         description = pAvailable,
                         type = "plate",
                         viewModel.selectedOrder?.id?.toInt(),
-                    )
+                        generatedId =viewModel.generatedId,
+                        )
                     val carLicence = ApiLogItem(
                         viewModel.plateNum,
                         description = lAvailable,
                         type = "license",
                         viewModel.selectedOrder?.id?.toInt(),
-                    )
+                        generatedId =viewModel.generatedId,
+                        )
                     val logArray = ArrayList<ApiLogItem>()
                     logArray.add(carPlate)
                     logArray.add(carLicence)

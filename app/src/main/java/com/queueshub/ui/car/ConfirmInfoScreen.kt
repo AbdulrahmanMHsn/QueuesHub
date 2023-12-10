@@ -250,7 +250,8 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
                 description = description,
                 type = "car_details",
                 sharedViewModel.selectedOrder?.id?.toInt(),
-            )
+                generatedId =sharedViewModel.generatedId,
+                )
 
             val logArray = ArrayList<ApiLogItem>()
             logArray.add(carDetails)

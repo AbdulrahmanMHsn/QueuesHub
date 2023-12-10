@@ -207,6 +207,7 @@ fun DeviceReplaceScreen(
                 description = description,
                 type = "inside_type",
                 sharedViewModel.selectedOrder?.id?.toInt(),
+                generatedId =sharedViewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()

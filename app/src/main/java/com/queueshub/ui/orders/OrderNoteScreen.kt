@@ -43,6 +43,7 @@ fun OrderNoteScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
             description = "تم الاإنتهاء من السياره ",
             type = "done",
             sharedViewModel.selectedOrder?.id?.toInt(),
+            generatedId =sharedViewModel.generatedId,
         )
 
         val logArray = ArrayList<ApiLogItem>()
