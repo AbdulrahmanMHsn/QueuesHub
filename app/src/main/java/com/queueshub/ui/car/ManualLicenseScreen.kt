@@ -1,6 +1,7 @@
 
 package com.queueshub.ui.car
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -63,6 +64,8 @@ fun ManualLicenseScreen(paddingValues: PaddingValues = PaddingValues(), router: 
         if (sharedViewModel.plateInfoAuto) {
             sharedViewModel.extractDataFromPlate()
         }
+        Log.d("MyDebugData"," : ManualLicenseScreen :  "   );
+
     }
     val isNextAvailable = sharedViewModel.plateNum != ""
     sharedViewModel.onUpdate.value
@@ -196,14 +199,17 @@ fun ManualLicenseScreen(paddingValues: PaddingValues = PaddingValues(), router: 
 
 
             val chassis = sharedViewModel.shaseh
+            val plateNum = sharedViewModel.plateNum
+            val carModel = sharedViewModel.carModel
+            val carStatus = if (sharedViewModel.carStatus == "working") "تعمل" else "لاتعمل"
 
-            val description = "تم تصوير الشاسيه رقم :  " + chassis
+            val description = "تم إضافه بيانات العربيه (" + " ماركه :" + carModel + ", اللوحه : " + plateNum + ", الشاسيه : " + chassis + ", الحاله : " + carStatus + ")"
             val carDetails = ApiLogItem(
-                sharedViewModel.plateNum,
+                plateNum,
                 description = description,
-                type = "chasiss",
+                type = "car_details",
                 sharedViewModel.selectedOrder?.id?.toInt(),
-                generatedId =sharedViewModel.generatedId,
+                generatedId = sharedViewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()

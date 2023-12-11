@@ -7,7 +7,6 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -58,7 +57,6 @@ import com.queueshub.ui.theme.DarkRed
 import com.queueshub.ui.theme.SpanishGreen
 import com.queueshub.utils.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -94,10 +92,6 @@ fun CarInfoScreen(
     val goConfirmation: () -> Unit = {
         router?.goInfoConfirmation()
     }
-
-
-
-
 
     BackHandler(openCamera || openImage) {
         openCamera = false
@@ -261,50 +255,41 @@ fun CarInfoScreen(
                 text = R.string.next,
                 isEnabled = nextAvailable,
             ) {
-                Log.d("MyDebugData"," : CarInfoScreen :  " +  viewModel.generatedId  );
+                val logArray = ArrayList<ApiLogItem>()
+
+                if (plateAvailable == 1) {
+                    val carPlate = ApiLogItem(
+                        viewModel.plateNum,
+                        description = "تم تصوير اللوحة",
+                        type = "plate",
+                        viewModel.selectedOrder?.id?.toInt(),
+                        generatedId = viewModel.generatedId,
+                    )
+                    logArray.add(carPlate)
+                }
+
+                if (licenseAvailable == 1) {
+                    val carLicence = ApiLogItem(
+                        viewModel.plateNum,
+                        description = "تم تصوير الرخصه",
+                        type = "license",
+                        viewModel.selectedOrder?.id?.toInt(),
+                        generatedId = viewModel.generatedId,
+                    )
+                    logArray.add(carLicence)
+                }
+
+                if (logArray.isNotEmpty()) {
+                    val logModel = ApiLog(logArray)
+                    vmLog.addLogs(logModel)
+                }
 
                 if (plateAvailable == 0) {
                     goManualPlate()
                 } else if (licenseAvailable == 0) {
                     goManualLicense()
                 } else {
-                    // ////////////////////////////// Add Logs //////////////////////////////////
-                   //0 goConfirmation()
-
-                    var pAvailable = "تم تصوير اللوحة"
-                    pAvailable = if (plateAvailable == 1) {
-                        "تم تصوير اللوحة"
-                    } else {
-                        "اللوحة غير متاحة"
-                    }
-
-                    var lAvailable = "تم تصوير الرخصه"
-                    lAvailable = if (plateAvailable == 1) {
-                        "تم تصوير الرخصه"
-                    } else {
-                        "الرخصه غير متاحة"
-                    }
-                    val carPlate = ApiLogItem(
-                        viewModel.plateNum,
-                        description = pAvailable,
-                        type = "plate",
-                        viewModel.selectedOrder?.id?.toInt(),
-                        generatedId =viewModel.generatedId,
-                        )
-                    val carLicence = ApiLogItem(
-                        viewModel.plateNum,
-                        description = lAvailable,
-                        type = "license",
-                        viewModel.selectedOrder?.id?.toInt(),
-                        generatedId =viewModel.generatedId,
-                        )
-                    val logArray = ArrayList<ApiLogItem>()
-                    logArray.add(carPlate)
-                    logArray.add(carLicence)
-                    val logModel = ApiLog(logArray)
-                    vmLog.addLogs(logModel)
                     goConfirmation()
-                    // ////////////////////////////// Add Logs //////////////////////////////////
                 }
             }
         }

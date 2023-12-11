@@ -36,6 +36,7 @@ import com.queueshub.ui.main.InputField
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.DarkRed
 import com.queueshub.ui.theme.SpanishGreen
+import kotlinx.coroutines.delay
 
 @Composable
 fun SimDetailsScreen(
@@ -174,19 +175,26 @@ fun SimDetailsScreen(
             }
             .padding(bottom = 34.dp), isEnabled = isNextAvailable, text = R.string.next) {
 
-
-            val simSerial = viewModel.simSerial
-
             val serialLog = ApiLogItem(
                 viewModel.plateNum,
-                description = "رقم مسلسل الشريحه:  " + simSerial,
+                description = "رقم مسلسل الشريحه:  " +  viewModel.simSerial,
                 type = "sim_serial",
                 viewModel.selectedOrder?.id?.toInt(),
                 generatedId =viewModel.generatedId,
             )
 
+            val simGsmLog = ApiLogItem(
+                viewModel.plateNum,
+                description = "رقم الشريحه gsm :  " + viewModel.simGSM,
+                type = "sim_gsm",
+                viewModel.selectedOrder?.id?.toInt(),
+                generatedId = viewModel.generatedId,
+            )
+
+
             val logArray = ArrayList<ApiLogItem>()
             logArray.add(serialLog)
+            logArray.add(simGsmLog)
             val logModel = ApiLog(logArray)
             vmLog.addLogs(logModel)
 

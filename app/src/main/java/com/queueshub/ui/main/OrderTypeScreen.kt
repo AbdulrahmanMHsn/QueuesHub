@@ -117,6 +117,7 @@ fun OrderTypeScreen(
                 description = description,
                 type = "type",
                 sharedViewModel.selectedOrder?.id?.toInt(),
+                generatedId = sharedViewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()
