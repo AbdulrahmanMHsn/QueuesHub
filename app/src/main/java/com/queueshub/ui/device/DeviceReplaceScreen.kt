@@ -173,33 +173,40 @@ fun DeviceReplaceScreen(
             text = R.string.done,
             isEnabled = nextAvailable,
         ) {
+            var replaceDevice = false
+            var replaceSim = false
+            var replacePlate = false
             sharedViewModel.saveOrderType(
                 selected.filter { it != -1 }.map {
                     when (it) {
                         0 -> {
+                            replaceDevice = true
                             "استبدال جهاز"
                         }
                         1 -> {
+                            replaceSim = true
                             "استبدال شريحة"
                         }
                         else -> {
+                            replacePlate = true
                             "استبدال لوحة"
                         }
                     }
                 } as ArrayList<String>,
             )
 
-            var description = "(الاختيار داخل الغرض  استبدال ونقل الجهاز) :"
+            var description = "(الاختيار داخل الغرض استبدال ونقل) :"
 
-            if (sharedViewModel.oldImei.isNotEmpty()) {
-                description = description + "استبدال الجهاز رقم هويه قديم(IMEI):  " + sharedViewModel.oldImei + " : "
-            }
-            if (sharedViewModel.oldSim.isNotEmpty()) {
-                description = description + "استبدال الشريحه رقم مسلسل قديم(SN):  " + sharedViewModel.oldSim + " : "
+            if (replaceDevice) {
+                description = description + "استبدال الجهاز: رقم هويه قديم(IMEI):  " + sharedViewModel.oldImei + " : "
             }
 
-            if (sharedViewModel.oldPlate.isNotEmpty()) {
-                description = description + "نقل الجهاز  رقم اللوحه القديمه:  " + sharedViewModel.oldPlate + " : "
+            if (replacePlate) {
+                description = description + "نقل الجهاز:  رقم اللوحه القديمه:  " + sharedViewModel.oldPlate + " : "
+            }
+
+            if (replaceSim) {
+                description = description + "استبدال الشريحه: رقم مسلسل قديم(SN):  " + sharedViewModel.oldSim + " : "
             }
 
             val orderType = ApiLogItem(
@@ -207,7 +214,7 @@ fun DeviceReplaceScreen(
                 description = description,
                 type = "inside_type",
                 sharedViewModel.selectedOrder?.id?.toInt(),
-                generatedId =sharedViewModel.generatedId,
+                generatedId = sharedViewModel.generatedId,
             )
 
             val logArray = ArrayList<ApiLogItem>()
