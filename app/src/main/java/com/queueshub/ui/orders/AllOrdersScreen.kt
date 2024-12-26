@@ -157,6 +157,18 @@ fun OrderBox(
         ) {
 
             Row(modifier = Modifier.padding(top = 16.dp)) {
+                Icon(imageVector = Icons.Default.Badge, contentDescription = "")
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    Text(
+                        text = "الرمز التعريفي ",
+                        style = MaterialTheme.typography.body1,
+                        fontSize = 12.sp
+                    )
+                    Text(text = order.id.toString(), style = MaterialTheme.typography.body1)
+                }
+            }
+
+            Row(modifier = Modifier.padding(top = 16.dp)) {
                 Icon(imageVector = Icons.Default.Payment, contentDescription = "")
                 Column(modifier = Modifier.padding(start = 8.dp)) {
                     Text(
