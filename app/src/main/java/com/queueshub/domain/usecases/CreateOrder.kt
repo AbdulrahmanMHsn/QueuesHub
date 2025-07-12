@@ -46,7 +46,8 @@ class CreateOrder @Inject constructor(private val appRepository: AppRepository) 
         frontLicenseFile: File?,
         backLicenseFile: File?,
         shasisFile: File?,
-        note: String
+        note: String,
+        technical_start: String,
     ) {
         return withContext(Dispatchers.IO) {
             appRepository.createOrder(
@@ -81,7 +82,8 @@ class CreateOrder @Inject constructor(private val appRepository: AppRepository) 
                 frontLicenseFile,
                 backLicenseFile,
                 shasisFile,
-                note
+                note,
+                technical_start
             ).getOrHandle {
                 throw it
             }

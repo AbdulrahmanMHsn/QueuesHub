@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -262,8 +263,84 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun ConfirmInfoScreenPreview() {
-    ConfirmInfoScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "بيانات العربية",
+            style = MaterialTheme.typography.subtitle1
+        )
+        Text(
+            text = "حالة العربية",
+            style = MaterialTheme.typography.subtitle2
+        )
+        
+        // Mock dropdown
+        AppDropdownMenu(
+            modifier = Modifier.fillMaxWidth(),
+            value = "تويوتا",
+            label = R.string.car_type,
+            options = listOf("تويوتا", "هوندا", "نيسان")
+        ) {}
+        
+        // Mock input fields
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            InputField(
+                modifier = Modifier.weight(1f),
+                text = "الموديل",
+                content = "2023",
+                onValueChange = {},
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                isEnabled = false
+            ) {}
+            
+            InputField(
+                modifier = Modifier.weight(1f),
+                text = "اللون",
+                content = "أبيض",
+                onValueChange = {},
+                keyboardType = KeyboardType.Text,
+                imeAction = ImeAction.Next,
+                isEnabled = false
+            ) {}
+        }
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم اللوحة",
+            content = "ABC123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next,
+            isEnabled = true
+        ) {}
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم الشاسيه",
+            content = "CHASSIS123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Go
+        ) {}
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم الموتور",
+            content = "MOTOR123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Go,
+            isEnabled = false
+        ) {}
+    }
 }

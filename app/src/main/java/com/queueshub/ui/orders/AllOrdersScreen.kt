@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
 import com.queueshub.ui.main.DialogBoxLoading
@@ -61,6 +62,7 @@ fun AllOrdersScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
         ) {
             ordersState.orders?.sortedBy { it.startDate }?.let {
                 val anyInProgress = it.any { it.status == "on_progress" }
+                sharedViewModel.isAnyOrderOnProgress = anyInProgress
                 LaunchedEffect(anyInProgress) {
 
                     if (anyInProgress && !sharedViewModel.goingBack)
@@ -102,14 +104,10 @@ fun OrdersList(orders: List<Order>, anyInProgress: Boolean, goOrderInfo: (Order)
         orders.groupBy { it.startDate.split(" ")[0] }.forEach { (date, orders) ->
 
             stickyHeader(key = date) {
-                val inPast = DateUtils.convertStringToDateTime(date+" 00:00:00", Locale.US)
-                    .before(Date())
-                DateHeader(date, inPast)
+                DateHeader(date)
             }
             items(orders) { order ->
-                val inPast = DateUtils.convertStringToDateTime(order.startDate, Locale.US)
-                    .before(Date())
-                OrderBox(order, inPast, anyInProgress, goOrderInfo)
+                OrderBox(order, anyInProgress, goOrderInfo)
             }
         }
 
@@ -119,7 +117,6 @@ fun OrdersList(orders: List<Order>, anyInProgress: Boolean, goOrderInfo: (Order)
 @Composable
 fun OrderBox(
     order: Order,
-    isInPast: Boolean,
     anyInProgress: Boolean,
     goOrderInfo: (Order) -> Unit
 ) {
@@ -130,10 +127,10 @@ fun OrderBox(
             .fillMaxWidth()
             .border(
                 1.dp,
-                if (selected) InProgress else if (isInPast && !anyInProgress) ChathamsBlue else Color.LightGray,
+                if (selected) InProgress else if (anyInProgress) ChathamsBlue else Color.LightGray,
                 RoundedCornerShape(8.dp)
             )
-            .clickable { if (selected) goOrderInfo(order) }
+            .clickable {  goOrderInfo(order) }
 
     ) {
         if (selected) {
@@ -229,8 +226,7 @@ fun OrderBox(
                     )
                 }
             }
-            if (isInPast && !anyInProgress
-            ) {
+
                 IconButton(modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 16.dp)
@@ -245,24 +241,24 @@ fun OrderBox(
                         tint = Color.White
                     )
                 }
-            }
+
         }
     }
 }
 
 @Composable
-fun DateHeader(date: String, isInPast: Boolean) {
+fun DateHeader(date: String) {
     Box(Modifier.fillMaxWidth().background(Background)){
 
     Text(
         modifier = Modifier
             .fillMaxWidth()
             .background(
-                if (isInPast) Teal400_20 else Color.LightGray,
+                Teal400_20 ,
                 RoundedCornerShape(8.dp)
             )
             .padding(10.dp),
-        color = if (isInPast) ChathamsBlue else Color.Gray,
+        color =ChathamsBlue ,
         textAlign = TextAlign.Center,
         style = MaterialTheme.typography.subtitle1,
         fontSize = 16.sp,
@@ -275,4 +271,116 @@ fun DateHeader(date: String, isInPast: Boolean) {
         ),
     )
     }
+}
+
+@Composable
+fun AllOrdersScreenContent(
+    orders: List<Order>?,
+    loading: Boolean,
+    failureMessage: String?,
+    anyInProgress: Boolean,
+    paddingValues: PaddingValues = PaddingValues(),
+    goOrderInfo: (Order) -> Unit = {},
+) {
+    Column(Modifier.padding(top = 16.dp, start = 16.dp, end = 16.dp)) {
+        Text(
+            text = "جميع أوامر التشغيل",
+            modifier = Modifier,
+            style = MaterialTheme.typography.subtitle1
+        )
+        Box(
+            modifier = Modifier
+                .padding(top = 32.dp)
+                .fillMaxSize()
+        ) {
+            orders?.sortedBy { it.startDate }?.let {
+                if (!anyInProgress) {
+                    OrdersList(it, anyInProgress, goOrderInfo)
+                }
+            } ?: run {
+                Image(
+                    modifier = Modifier.align(Alignment.Center),
+                    painter = painterResource(id = R.drawable.no_orders),
+                    contentDescription = "لا يوجد طلبات حالياً"
+                )
+            }
+            if (loading) {
+                Box(
+                    contentAlignment = Alignment.Center, modifier = Modifier.matchParentSize()
+                ) {
+                    DialogBoxLoading()
+                }
+            }
+            failureMessage?.let {
+                // In preview, just show a text instead of a Toast
+                Text(
+                    text = it,
+                    color = Color.Red,
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            }
+        }
+    }
+}
+
+
+
+@Preview(showBackground = true)
+@Composable
+fun AllOrdersScreenPreview() {
+    // Mock Order data
+    val mockOrder = Order(
+        id = 123,
+        customerName = "شركة الاختبار",
+        address = "القاهرة",
+        inCompany = 0,
+        governorate = null,
+        startDate = "2025-07-29 10:00:00",
+        endDate = "2025-06-29 12:00:00",
+        status = "in_progress",
+        numberOfCars = 1,
+        finishedCars = 1,
+        governorateId = 1L,
+        neededNumber = "12345",
+        customerId = 456L,
+        customerDelegator = "محمد أحمد",
+        customerDelegatorPhone = "+20123456789",
+        customerNationalId = "29901012345678",
+        statusAr = "مكتمل",
+        orderCreator = 789L,
+        neededAmount = "1500",
+        receivedAmount = "1500",
+        neededName = "صيانة سيارات"
+    )
+
+    val mockOrderr =  Order(
+        id = 123,
+        customerName = "شركة الاختبار",
+        address = "القاهرة",
+        inCompany = 0,
+        governorate = null,
+        startDate = "2025-07-29 10:00:00",
+        endDate = "2025-06-29 12:00:00",
+        status = "on_progress",
+        numberOfCars = 1,
+        finishedCars = 1,
+        governorateId = 1L,
+        neededNumber = "12345",
+        customerId = 456L,
+        customerDelegator = "محمد أحمد",
+        customerDelegatorPhone = "+20123456789",
+        customerNationalId = "29901012345678",
+        statusAr = "مكتمل",
+        orderCreator = 789L,
+        neededAmount = "1500",
+        receivedAmount = "1500",
+        neededName = "صيانة سيارات"
+    )
+
+    AllOrdersScreenContent(
+        orders = listOf(mockOrder,mockOrderr),
+        loading = false,
+        failureMessage = null,
+        anyInProgress = false
+    )
 }

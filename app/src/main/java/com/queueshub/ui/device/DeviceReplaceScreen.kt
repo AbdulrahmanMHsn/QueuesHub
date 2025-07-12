@@ -314,25 +314,23 @@ fun SelectableWithInputWidget(
     }
 }
 
-@Preview(locale = "ar")
-@Composable
-fun SelectableWithInputWidgetPreview() {
-    SelectableWithInputWidget(
-        modifier = Modifier,
-        true,
-        1,
-        ReplacementUI(
-            "نقل الجهاز",
-            "رقم اللوحة القديمة",
-            R.drawable.transfer_device,
-        ),
-        { b, it -> },
-        { id, text -> },
-    )
-}
-
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DeviceReplaceScreenPreview() {
-    DeviceReplaceScreen()
+    // Mock data for preview
+    val mockReplacementUI = ReplacementUI(
+        "استبدال جهاز",
+        "(IMEI) رقم هوية الجهاز القديم",
+        R.drawable.replace_device,
+        KeyboardType.Number,
+    )
+    
+    SelectableWithInputWidget(
+        modifier = Modifier.padding(8.dp),
+        isSelected = true,
+        id = 1L,
+        replacementUI = mockReplacementUI,
+        onToggleChange = { _, _ -> },
+        onTextChange = { _, _ -> }
+    )
 }

@@ -6,8 +6,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
@@ -82,7 +84,13 @@ fun OrderTypeScreen(
         }
     }
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 100.dp) // Add padding to ensure button doesn't overlap content
+        ) {
             Text(
                 text = "غرض الأمر",
                 modifier = Modifier.padding(top = 56.dp),
@@ -130,6 +138,10 @@ fun OrderTypeScreen(
                 REMOVE_DEVICE -> goRemoval()
                 REPAIR_DEVICE -> goRepair()
                 REPLACE_DEVICE -> goReplace()
+                ADD_NEW_FEATURE -> {
+                    sharedViewModel.saveOrderType(arrayListOf("اضافة خاصية"))
+                    goNote()
+                }
                 else -> {
                     sharedViewModel.saveOrderType(arrayListOf("تركيب"))
                     goNote()
@@ -152,6 +164,7 @@ fun MultiToggleButton(
         modifier = Modifier
             .padding(top = 35.dp)
             .padding(horizontal = 16.dp)
+            .padding(bottom = 16.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             val isNewDevice = currentSelection == NEW_DEVICE
@@ -204,6 +217,7 @@ fun MultiToggleButton(
 //                onToggleChange(currentSelection)
             }
 
+
             OrderTypeWidget(
                 modifier = Modifier.weight(1f),
                 isRepair,
@@ -217,7 +231,37 @@ fun MultiToggleButton(
 //                onToggleChange(currentSelection)
             }
 
+
+
         }
+
+        Spacer(
+            modifier = Modifier.height(height = 16.dp)
+        )
+
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            val isAddNewFeature = currentSelection == ADD_NEW_FEATURE
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isAddNewFeature,
+                ADD_NEW_FEATURE.value,
+                R.drawable.new_device_selected,
+                R.drawable.new_device,
+                stringResource(id = R.string.add_feature)
+            ) { selection ->
+                viewModel.orderType = OrderType.values().find { it.value == selection }!!
+                viewModel.updateUI()
+//                onToggleChange(currentSelection)
+            }
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+
+
     }
 }
 
@@ -274,8 +318,260 @@ fun OrderTypeWidget(
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun OrderTypeScreenPreview() {
-    OrderTypeScreen()
+    // For OrderTypeScreen preview, we can't easily mock the full AppViewModel
+    // since it requires Hilt injection. Instead, create a simpler preview
+    // or use a different approach
+
+    // Option 1: Create a basic layout preview without the full functionality
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 100.dp)
+        ) {
+            Text(
+                text = "غرض الأمر",
+                modifier = Modifier.padding(top = 56.dp),
+                style = MaterialTheme.typography.subtitle1
+            )
+            Text(text = "اختر امر التشغيل", style = MaterialTheme.typography.subtitle2)
+
+            // Show a static preview of the toggle buttons
+            Column(
+                modifier = Modifier
+                    .padding(top = 35.dp)
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OrderTypeWidget(
+                        modifier = Modifier.weight(1f),
+                        isSelected = true,
+                        type = NEW_DEVICE.value,
+                        selectedImage = R.drawable.new_device_selected,
+                        unselectedImage = R.drawable.new_device,
+                        text = stringResource(id = R.string.new_device),
+                        onToggleChange = {}
+                    )
+                    OrderTypeWidget(
+                        modifier = Modifier.weight(1f),
+                        isSelected = false,
+                        type = REPLACE_DEVICE.value,
+                        selectedImage = R.drawable.replace_device_selected,
+                        unselectedImage = R.drawable.order_replacement,
+                        text = stringResource(id = R.string.replace_device),
+                        onToggleChange = {}
+                    )
+                }
+
+                Spacer(
+                    modifier = Modifier.height(height = 16.dp)
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OrderTypeWidget(
+                        modifier = Modifier.weight(1f),
+                        isSelected = false,
+                        type = REMOVE_DEVICE.value,
+                        selectedImage = R.drawable.remove_device_selected,
+                        unselectedImage = R.drawable.remove_device,
+                        text = stringResource(id = R.string.remove_device),
+                        onToggleChange = {}
+                    )
+                    OrderTypeWidget(
+                        modifier = Modifier.weight(1f),
+                        isSelected = false,
+                        type = REPAIR_DEVICE.value,
+                        selectedImage = R.drawable.repair_device_selected,
+                        unselectedImage = R.drawable.repair_device,
+                        text = stringResource(id = R.string.repair_device),
+                        onToggleChange = {}
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OrderTypeWidget(
+                        modifier = Modifier.weight(1f),
+                        isSelected = false,
+                        type = ADD_NEW_FEATURE.value,
+                        selectedImage = R.drawable.new_device_selected,
+                        unselectedImage = R.drawable.new_device,
+                        text = stringResource(id = R.string.add_feature),
+                        onToggleChange = {}
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+
+        // Static preview of the button
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 34.dp)
+                .padding(horizontal = 16.dp)
+                .fillMaxWidth()
+                .height(48.dp)
+                .background(
+                    color = Teal400,
+                    shape = RoundedCornerShape(4.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = stringResource(id = R.string.next),
+                color = Color.White,
+                style = MaterialTheme.typography.button
+            )
+        }
+    }
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun MultiToggleButtonPreview() {
+    // Create a static preview showing different states
+    Column(
+        modifier = Modifier
+            .padding(top = 35.dp)
+            .padding(horizontal = 16.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isSelected = true,
+                type = NEW_DEVICE.value,
+                selectedImage = R.drawable.new_device_selected,
+                unselectedImage = R.drawable.new_device,
+                text = stringResource(id = R.string.new_device),
+                onToggleChange = {}
+            )
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isSelected = false,
+                type = REPLACE_DEVICE.value,
+                selectedImage = R.drawable.replace_device_selected,
+                unselectedImage = R.drawable.order_replacement,
+                text = stringResource(id = R.string.replace_device),
+                onToggleChange = {}
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isSelected = false,
+                type = REMOVE_DEVICE.value,
+                selectedImage = R.drawable.remove_device_selected,
+                unselectedImage = R.drawable.remove_device,
+                text = stringResource(id = R.string.remove_device),
+                onToggleChange = {}
+            )
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isSelected = false,
+                type = REPAIR_DEVICE.value,
+                selectedImage = R.drawable.repair_device_selected,
+                unselectedImage = R.drawable.repair_device,
+                text = stringResource(id = R.string.repair_device),
+                onToggleChange = {}
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            OrderTypeWidget(
+                modifier = Modifier.weight(1f),
+                isSelected = false,
+                type = ADD_NEW_FEATURE.value,
+                selectedImage = R.drawable.new_device_selected,
+                unselectedImage = R.drawable.new_device,
+                text = stringResource(id = R.string.add_feature),
+                onToggleChange = {}
+            )
+            Spacer(modifier = Modifier.weight(1f))
+
+
+        }
+    }
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderTypeWidgetPreview() {
+    OrderTypeWidget(
+        modifier = Modifier.size(120.dp),
+        isSelected = true,
+        type = "0L",
+        selectedImage = R.drawable.new_device_selected,
+        unselectedImage = R.drawable.new_device,
+        text = "جهاز جديد",
+        onToggleChange = {}
+    )
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderTypeWidgetUnselectedPreview() {
+    OrderTypeWidget(
+        modifier = Modifier.size(120.dp),
+        isSelected = false,
+        type = "1L",
+        selectedImage = R.drawable.replace_device_selected,
+        unselectedImage = R.drawable.order_replacement,
+        text = "استبدال الجهاز",
+        onToggleChange = {}
+    )
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderTypeWidgetRepairPreview() {
+    OrderTypeWidget(
+        modifier = Modifier.size(120.dp),
+        isSelected = true,
+        type = "2L",
+        selectedImage = R.drawable.repair_device_selected,
+        unselectedImage = R.drawable.repair_device,
+        text = "صيانة الجهاز",
+        onToggleChange = {}
+    )
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderTypeWidgetRemovePreview() {
+    OrderTypeWidget(
+        modifier = Modifier.size(120.dp),
+        isSelected = false,
+        type = "3L",
+        selectedImage = R.drawable.remove_device_selected,
+        unselectedImage = R.drawable.remove_device,
+        text = "فك الجهاز",
+        onToggleChange = {}
+    )
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderTypeWidgetAddFeaturePreview() {
+    OrderTypeWidget(
+        modifier = Modifier.size(120.dp),
+        isSelected = true,
+        type = "6L",
+        selectedImage = R.drawable.new_device_selected,
+        unselectedImage = R.drawable.new_device,
+        text = "إضافة ميزة",
+        onToggleChange = {}
+    )
 }

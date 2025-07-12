@@ -6,6 +6,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -299,8 +300,47 @@ fun ManualPlateScreen(
         }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun ManualPlateScreenPreview() {
-    ManualPlateScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "بيانات العربية",
+            style = MaterialTheme.typography.subtitle1
+        )
+        Text(
+            text = "حالة العربية",
+            style = MaterialTheme.typography.subtitle2
+        )
+        
+        // Mock dropdown and input
+        AppDropdownMenu(
+            modifier = Modifier.fillMaxWidth(),
+            value = "تويوتا",
+            label = R.string.car_type,
+            options = listOf("تويوتا", "هوندا", "نيسان")
+        ) {}
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم الشاسيه",
+            content = "CHASSIS123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Go
+        ) {}
+        
+        DeviceCardContent(
+            modifier = Modifier.fillMaxWidth(),
+            scaffoldState = null,
+            title = R.string.shaseh_image,
+            deviceImage = null,
+            openImage = {},
+            imageUploaded = {}
+        )
+    }
 }

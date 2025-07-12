@@ -7,11 +7,8 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -21,42 +18,40 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
+import com.queueshub.domain.model.Car
+import com.queueshub.domain.model.Order
 import com.queueshub.ui.AppViewModel
 import com.queueshub.ui.MainActivity
 import com.queueshub.ui.car.isAvailableGroup
 import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.DialogBoxLoading
-import com.queueshub.ui.navigation.Router
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.core.text.isDigitsOnly
-import com.queueshub.domain.model.Car
-import com.queueshub.domain.model.Order
 import com.queueshub.ui.main.InputField
+import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
-
 
 @Composable
 fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Router? = null) {
-
     val context = LocalContext.current
-
     val sharedViewModel: AppViewModel = hiltViewModel(context as MainActivity)
-
     val viewModel: OrdersViewModel = hiltViewModel()
     val ordersState by viewModel.carsState.collectAsState()
 
@@ -77,15 +72,27 @@ fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
             sharedViewModel.showedInfo = true
         }
     }
+
     LaunchedEffect(sharedViewModel.selectedOrder) {
         sharedViewModel.selectedOrder?.let { viewModel.getOrders(it) }
     }
-    Box(modifier = Modifier.fillMaxSize()) {
-        ordersState.cars?.let {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues) // Apply padding from parent
+    ) {
+        ordersState.cars?.let { cars ->
             sharedViewModel.orderId = sharedViewModel.selectedOrder?.id ?: 0
-            sharedViewModel.selectedOrder?.let { it1 ->
-                orderCarsContent(
-                    viewModel,sharedViewModel, it1, it, goCarInfo, goOrderInfo,goAllOrders
+            sharedViewModel.selectedOrder?.let { order ->
+                OrderCarsContent(
+                    viewModel = viewModel,
+                    sharedViewModel = sharedViewModel,
+                    order = order,
+                    cars = cars,
+                    goCarInfo = goCarInfo,
+                    goOrderInfo = goOrderInfo,
+                    goAllOrders = goAllOrders
                 )
             }
         } ?: run {
@@ -95,28 +102,30 @@ fun OrderCarsScreen(paddingValues: PaddingValues = PaddingValues(), router: Rout
                 contentDescription = "لا يوجد طلبات حالياً"
             )
         }
+
         if (ordersState.loading) {
             Box(
-                contentAlignment = Alignment.Center, modifier = Modifier.matchParentSize()
+                contentAlignment = Alignment.Center,
+                modifier = Modifier.matchParentSize()
             ) {
                 DialogBoxLoading()
             }
         }
-        ordersState.failure?.let {
-            val content = it.getContentIfNotHandled()
-            content?.let {
-                Toast.makeText(
-                    context, it.localizedMessage, Toast.LENGTH_SHORT
-                ).show()
+
+        ordersState.failure?.let { failure ->
+            val content = failure.getContentIfNotHandled()
+            content?.let { error ->
+                LaunchedEffect(error) {
+                    Toast.makeText(context, error.localizedMessage, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun orderCarsContent(
-    viewmodel: OrdersViewModel,
+private fun OrderCarsContent(
+    viewModel: OrdersViewModel,
     sharedViewModel: AppViewModel,
     order: Order,
     cars: List<Car>,
@@ -124,45 +133,99 @@ fun orderCarsContent(
     goOrderInfo: () -> Unit,
     goAllOrders: () -> Unit,
 ) {
-    var showDialog: Boolean by remember { mutableStateOf(false) }
-    var collected: Int by remember { mutableStateOf(0) }
-    var receivedAmount: String by remember { mutableStateOf("0") }
-    Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        // Fixed content here
-        Row(
-            modifier = Modifier
-                .padding(top = 16.dp, start = 16.dp)
-                .align(Alignment.Start)
-                .clickable {
-                    goOrderInfo()
-                }, verticalAlignment = Alignment.CenterVertically
-        ) {
+    var showDialog by remember { mutableStateOf(false) }
+    var collected by remember { mutableStateOf(0) }
+    var receivedAmount by remember { mutableStateOf("0") }
 
-            val image: Painter = painterResource(id = R.drawable.right)
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        // Header with back button
+        HeaderSection(goOrderInfo = goOrderInfo)
 
-            Image(
-                painter = image,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-            )
+        // Title section
+        TitleSection(order = order)
 
-            Text(
-                modifier = Modifier.padding(start = 16.dp),
-                text = "رجوع",
-                style = MaterialTheme.typography.subtitle1
-            )
-        }
+        // Cars list
+        CarsListSection(
+            modifier = Modifier.weight(1f),
+            order = order,
+            sharedViewModel = sharedViewModel,
+            cars = cars,
+            goCarInfo = goCarInfo
+        )
+
+        // Bottom button
+        BottomButton(
+            order = order,
+            viewModel = viewModel,
+            onShowDialog = { showDialog = true },
+            goAllOrders = goAllOrders
+        )
+    }
+
+    // Payment dialog
+    if (showDialog) {
+        PaymentDialog(
+            order = order,
+            collected = collected,
+            receivedAmount = receivedAmount,
+            onCollectedChange = { collected = it },
+            onAmountChange = {
+                receivedAmount = it
+                viewModel.receivedAmount = if (it.isNotEmpty()) it.toIntOrNull() ?: 0 else 0
+            },
+            onConfirm = {
+                viewModel.closeOrder(order.id)
+                goAllOrders()
+            },
+            onDismiss = { showDialog = false }
+        )
+    }
+}
+
+@Composable
+private fun HeaderSection(goOrderInfo: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .padding(top = 16.dp, start = 16.dp)
+            .fillMaxWidth()
+            .clickable { goOrderInfo() },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.right),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+        )
+        Text(
+            modifier = Modifier.padding(start = 16.dp),
+            text = "رجوع",
+            style = MaterialTheme.typography.subtitle1
+        )
+    }
+}
+
+@Composable
+private fun TitleSection(order: Order) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.padding(top = 48.dp)
+    ) {
         Text(
             text = "سيارات امر التشغيل",
-            modifier = Modifier.padding(top = 48.dp),
             style = MaterialTheme.typography.subtitle1
         )
         Text(
-            modifier = Modifier, text = "تم الانتهاء من", style = MaterialTheme.typography.subtitle2
+            text = "تم الانتهاء من",
+            style = MaterialTheme.typography.subtitle2,
+            modifier = Modifier.padding(top = 8.dp)
         )
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(top = 4.dp)
+        ) {
             Text(
                 text = "${order.finishedCars}",
                 fontSize = 35.sp,
@@ -175,230 +238,317 @@ fun orderCarsContent(
                 style = MaterialTheme.typography.subtitle2
             )
         }
+    }
+}
 
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        ) {
-            // your scrollable content here
-            LazyColumn(
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp), modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                items(cars.sortedByDescending { it.status }) { car ->
-                    Row(
-                        modifier = Modifier
-                            .padding(6.dp)
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Min)
-                            .background(
-                                SpanishGreen,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .border(
-                                1.dp,
-                                SpanishGreen,
-                                RoundedCornerShape(8.dp)
-                            )
-                    ) {
-                        val image: Painter =
-                            painterResource(id = R.drawable.done_order)
-                        Image(
-                            modifier = Modifier.padding(16.dp),
-                            painter = image,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop
-                        )
-                        Divider(
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .width(2.dp),
-                            color = Color.White,
-                            thickness = 2.dp
-                        )
-                        Column(
-                            modifier = Modifier.padding(16.dp)
-                        ) {
-                            Text(
-                                text = if(car.plateNum.isNullOrBlank())  "رقم الشاسية" else "رقم اللوحة",
-                                style = MaterialTheme.typography.button,
-                                fontSize = 10.sp
-                            )
-                            Text(
-                                text = if(car.plateNum.isNullOrBlank()) car.chassisNum?:""  else car.plateNum,
-                                style = MaterialTheme.typography.button,
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
-                if(order.numberOfCars - order.finishedCars >0) {
-                    val x = arrayOfNulls<String?>(order.numberOfCars - order.finishedCars)
-                    itemsIndexed(x) { index: Int, item: String? ->
-                        Row(
-                            modifier = Modifier
-                                .padding(6.dp)
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Min)
-                                .background(
-                                    Color.White,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    if (index == 0) Tundora else LightGrey,
-                                    RoundedCornerShape(8.dp)
-                                )
-                                .clickable {
-                                    if (index == 0) {
-                                        goCarInfo()
-                                    }
-                                }
-                        ) {
-                            val image: Painter =
-                                painterResource(id = if (index != 0) R.drawable.group_8 else R.drawable.next_order)
-                            Image(
-                                modifier = Modifier.padding(16.dp),
-                                painter = image,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop
-                            )
-                            Divider(
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .width(2.dp),
-                                color = Color.White,
-                                thickness = 2.dp
-                            )
+@Composable
+private fun CarsListSection(
+    modifier: Modifier = Modifier,
+    order: Order,
+    sharedViewModel: AppViewModel,
+    cars: List<Car>,
+    goCarInfo: () -> Unit
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Completed cars
+        items(cars.sortedByDescending { it.status }) { car ->
+            CompletedCarItem(car = car)
+        }
 
+        // Pending cars
+        val pendingCarsCount = order.numberOfCars - order.finishedCars
+        if (pendingCarsCount > 0) {
+            itemsIndexed(List(pendingCarsCount) { it }) { index, _ ->
+                PendingCarItem(
+                    index = index,
+                    isNext = index == 0,
+                    onClick = { if (index == 0)
+
+                    // add current date object of device to technicalStart
+
+                        try {
+                            val date = Date()
+                            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+                            val formatted = formatter.format(date)
+                            sharedViewModel.technicalStart = formatted
+                        }catch (e: Exception) {
+                            sharedViewModel.technicalStart = Date().toString()
                         }
-                    }
-                }
-                if (order.finishedCars >= order.numberOfCars) {
-                    item {
-                        IconButton(modifier = Modifier
-                            .align(Alignment.CenterHorizontally)
-                            .padding(top = 16.dp)
-                            .background(
-                                Color.White,
-                                RoundedCornerShape(8.dp)
-                            )
-                            .padding(8.dp), onClick = { goCarInfo() }) {
-                            Icon(
-                                imageVector = Icons.Default.Add,
-                                contentDescription = "",
-                                tint = Teal400
-                            )
-                        }
-                    }
-                }
+
+                        goCarInfo() }
+                )
             }
         }
 
-
-        AppButton(
-            modifier = Modifier.padding(bottom = 34.dp),
-            text = R.string.done, isEnabled = order.numberOfCars - order.finishedCars <= 0,
-        ) {
-            if (!viewmodel.shouldPaid) {
-                viewmodel.closeOrder(order.id)
-                goAllOrders()
+        // Add more cars button (if all cars are finished)
+        if (order.finishedCars >= order.numberOfCars) {
+            item {
+                AddCarButton(onClick = goCarInfo)
             }
-            else {
-                showDialog = true
-            }
-        }
-        if (showDialog) {
-            AlertDialog(modifier = Modifier
-                .height(400.dp)
-                .padding(vertical = 16.dp),
-                onDismissRequest = {},
-                title = {
-
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        text = "تحصيل رسوم أمر التشغيل",
-                        style = MaterialTheme.typography.subtitle1,
-                        fontSize = 18.sp
-                    )
-                },
-                text = {
-                    Column {
-                        Text(
-                            modifier = Modifier.align(Alignment.CenterHorizontally),
-                            text = "هل تم تحصيل رسوم امر التشغيل؟",
-                            style = MaterialTheme.typography.subtitle2
-                        )
-
-
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp)
-                        ) {
-
-                            isAvailableGroup(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(end = 4.dp),
-                                collected == 1,
-                                true,
-                                SpanishGreen,
-                                Icons.Default.Check,
-                                R.string.done_collecting,
-                                fontSize = 12.sp,
-                            ) {
-                                collected = 1
-                            }
-
-                            isAvailableGroup(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 4.dp),
-                                collected == 0,
-                                false,
-                                DarkRed,
-                                Icons.Default.Clear,
-                                R.string.not_collected,
-                                fontSize = 12.sp,
-                            ) {
-                                collected = 0
-                                viewmodel.receivedAmount = 0
-                            }
-                        }
-
-                        if (collected == 1) {
-                            InputField(
-                                stringResource(id = R.string.received_amount),
-                                KeyboardType.Decimal,
-                                receivedAmount,
-                                modifier = Modifier.padding(16.dp),
-                                onValueChange = {
-                                    if (it.isDigitsOnly()) {
-                                        receivedAmount = it
-                                        if (it.isNotEmpty()) viewmodel.receivedAmount = it.toInt()
-                                        else viewmodel.receivedAmount = 0
-                                    }
-                                },
-                                imeAction = ImeAction.Done
-                            )
-
-                        }
-                    }
-                },
-                confirmButton = {
-                    AppButton(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 34.dp),
-                        text = R.string.done,
-                        isEnabled = order.numberOfCars - order.finishedCars <= 0,
-                    ) {
-                        viewmodel.closeOrder(order.id)
-                        goAllOrders()
-                    }
-                })
         }
     }
+}
+
+@Composable
+private fun CompletedCarItem(car: Car) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(SpanishGreen, RoundedCornerShape(8.dp))
+            .border(1.dp, SpanishGreen, RoundedCornerShape(8.dp))
+    ) {
+        Image(
+            modifier = Modifier.padding(16.dp),
+            painter = painterResource(id = R.drawable.done_order),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(2.dp)
+                .background(Color.White)
+        )
+
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = if (car.plateNum.isNullOrBlank()) "رقم الشاسية" else "رقم اللوحة",
+                style = MaterialTheme.typography.button,
+                fontSize = 10.sp
+            )
+            Text(
+                text = if (car.plateNum.isNullOrBlank()) {
+                    car.chassisNum ?: ""
+                } else {
+                    car.plateNum
+                },
+                style = MaterialTheme.typography.button,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun PendingCarItem(
+    index: Int,
+    isNext: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .border(
+                1.dp,
+                if (isNext) Tundora else LightGrey,
+                RoundedCornerShape(8.dp)
+            )
+            .clickable(enabled = isNext) { onClick() }
+    ) {
+        Image(
+            modifier = Modifier.padding(16.dp),
+            painter = painterResource(
+                id = if (isNext) R.drawable.next_order else R.drawable.group_8
+            ),
+            contentDescription = null,
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(2.dp)
+                .background(Color.White)
+        )
+    }
+}
+
+@Composable
+private fun AddCarButton(onClick: () -> Unit) {
+    IconButton(
+        modifier = Modifier
+            .padding(top = 16.dp)
+            .background(Color.White, RoundedCornerShape(8.dp))
+            .padding(8.dp),
+        onClick = onClick
+    ) {
+        Icon(
+            imageVector = Icons.Default.Add,
+            contentDescription = "",
+            tint = Teal400
+        )
+    }
+}
+
+@Composable
+private fun BottomButton(
+    order: Order,
+    viewModel: OrdersViewModel,
+    onShowDialog: () -> Unit,
+    goAllOrders: () -> Unit
+) {
+    AppButton(
+        modifier = Modifier.padding(bottom = 34.dp),
+        text = R.string.done,
+        isEnabled = order.numberOfCars - order.finishedCars <= 0,
+    ) {
+        if (!viewModel.shouldPaid) {
+            viewModel.closeOrder(order.id)
+            goAllOrders()
+        } else {
+            onShowDialog()
+        }
+    }
+}
+
+@Composable
+private fun PaymentDialog(
+    order: Order,
+    collected: Int,
+    receivedAmount: String,
+    onCollectedChange: (Int) -> Unit,
+    onAmountChange: (String) -> Unit,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                text = "تحصيل رسوم أمر التشغيل",
+                style = MaterialTheme.typography.subtitle1,
+                fontSize = 18.sp
+            )
+        },
+        text = {
+            Column {
+                Text(
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                    text = "هل تم تحصيل رسوم امر التشغيل؟",
+                    style = MaterialTheme.typography.subtitle2
+                )
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp)
+                ) {
+                    isAvailableGroup(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 4.dp),
+                        collected == 1,
+                        true,
+                        SpanishGreen,
+                        Icons.Default.Check,
+                        R.string.done_collecting,
+                        fontSize = 12.sp,
+                    ) {
+                        onCollectedChange(1)
+                    }
+
+                    isAvailableGroup(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 4.dp),
+                        collected == 0,
+                        false,
+                        DarkRed,
+                        Icons.Default.Clear,
+                        R.string.not_collected,
+                        fontSize = 12.sp,
+                    ) {
+                        onCollectedChange(0)
+                        onAmountChange("0")
+                    }
+                }
+
+                if (collected == 1) {
+                    InputField(
+                        stringResource(id = R.string.received_amount),
+                        KeyboardType.Decimal,
+                        receivedAmount,
+                        modifier = Modifier.padding(16.dp),
+                        onValueChange = { newValue ->
+                            if (newValue.isDigitsOnly()) {
+                                onAmountChange(newValue)
+                            }
+                        },
+                        imeAction = ImeAction.Done
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            AppButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+                text = R.string.done,
+                isEnabled = order.numberOfCars - order.finishedCars <= 0,
+            ) {
+                onConfirm()
+            }
+        }
+    )
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderCarsScreenPreview() {
+    val mockOrder = Order(
+        id = 123,
+        customerName = "شركة الاختبار",
+        address = "القاهرة",
+        inCompany = 0,
+        governorate = null,
+        startDate = "2025-06-23 10:00:00",
+        endDate = "2025-06-23 12:00:00",
+        status = "on_progress",
+        numberOfCars = 3,
+        finishedCars = 1,
+        governorateId = 1L,
+        neededNumber = "12345",
+        customerId = 456L,
+        customerDelegator = "محمد أحمد",
+        customerDelegatorPhone = "+20123456789",
+        customerNationalId = "29901012345678",
+        statusAr = "قيد التنفيذ",
+        orderCreator = 789L,
+        neededAmount = "1500",
+        receivedAmount = "1500",
+        neededName = "صيانة سيارات"
+    )
+
+    val mockCar = Car(
+        id = 1,
+        plateNum = "ABC123",
+        chassisNum = "CHASSIS123",
+        status = "completed",
+        startDate = "2025-06-23 10:00:00",
+        statusAr = "مكتمل",
+        statusDate = "2025-06-23 11:00:00",
+        motorNum = "MOTOR123",
+    )
+
+    OrderCarsContent(
+        viewModel = hiltViewModel(),
+        sharedViewModel = hiltViewModel(),
+        order = mockOrder,
+        cars = listOf(mockCar, mockCar.copy(id = 2, plateNum = "XYZ789", status = "pending")),
+        goCarInfo = {},
+        goOrderInfo = {},
+        goAllOrders = {}
+    )
 }

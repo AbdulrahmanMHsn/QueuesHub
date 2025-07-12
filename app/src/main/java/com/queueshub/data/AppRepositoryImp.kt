@@ -22,6 +22,13 @@ class AppRepositoryImp @Inject constructor(
 ) : AppRepository {
 
 
+/* <<<<<<<<<<<<<<  ✨ Windsurf Command ⭐ >>>>>>>>>>>>>>>> */
+    /**
+     * Retrieves the user's login state and ID.
+     *
+     * @return a [Pair] of a [Boolean] indicating whether the user is logged in, and a [Long] containing the user's ID.
+     */
+/* <<<<<<<<<<  cea1cb04-b924-49bb-976b-fdb85278919e  >>>>>>>>>>> */
     override fun getUserLogged() = local.getUserLogged()
     override fun getOrderStarted() = local.getOrderStarted()
     override fun shouldBePaid() = local.shouldBePaid()
@@ -157,9 +164,12 @@ class AppRepositoryImp @Inject constructor(
         frontLicenseFile: File?,
         backLicenseFile: File?,
         chassisFile: File?,
-        note: String
+        note: String,
+        technical_start: String
     ): Either<IOException, Any> {
         val map: MutableMap<String, RequestBody?> = mutableMapOf()
+        val technicalStartPart = createPartFromString(technical_start)
+        map["technical_start"] = technicalStartPart
         val carModelPart = createPartFromString(carModel)
         map["model"] = carModelPart
         val yearPart = createPartFromString(year)
@@ -247,6 +257,7 @@ class AppRepositoryImp @Inject constructor(
         }
         val simTypePart = createPartFromString(simType)
         map["sim[sim_type]"] = simTypePart
+
         val simSerialPart = createPartFromString(simSN)
         map["sim[serial_num]"] = simSerialPart
         val simGSMPart = createPartFromString(simGSM)

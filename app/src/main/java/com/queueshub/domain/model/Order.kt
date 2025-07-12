@@ -21,5 +21,5 @@ data class Order(
     val neededAmount: String,
     val receivedAmount: String,
     val neededName: String,
-    val governorate: Government?
+    val governorate: Government?,
 )

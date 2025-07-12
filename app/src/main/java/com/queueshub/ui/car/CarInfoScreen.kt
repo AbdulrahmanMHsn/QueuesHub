@@ -542,11 +542,23 @@ fun isAvailableGroup(
     }
 }
 
-@Preview(locale = "ar")
-@ExperimentalGetImage
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun CarInfoScreenPreview() {
-    CarInfoScreen()
+    // Mock data for preview
+    CarInfoCardContent(
+        modifier = Modifier.fillMaxWidth(),
+        scaffoldState = null,
+        title = R.string.car_plate,
+        image = R.drawable.car_plate,
+        openCameraPreview = {},
+        openImage = {}, isAvailable = { _ -> },
+        isEnabled = true,
+        imageBitmap = null,
+        imageBitmap2 = null,
+        negativeText = R.string.not_available,
+        availability = 1
+    )
 }
 
 @Preview(locale = "ar")

@@ -55,7 +55,8 @@ interface AppRepository {
         frontLicenseFile: File?,
         backLicenseFile: File?,
         chassisFile: File?,
-        note: String
+        note: String,
+        technical_start:String
     ): Either<IOException, Any>
 
     suspend fun logData(data: ApiLog): Either<IOException, Boolean>

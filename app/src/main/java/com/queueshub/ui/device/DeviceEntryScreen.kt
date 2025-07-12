@@ -400,8 +400,19 @@ fun DeviceCardContent(
         })
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DeviceEntryScreenPreview() {
-    DeviceEntryScreen()
+    // Mock data for preview
+    DeviceCardContent(
+        modifier = Modifier.fillMaxWidth(),
+        scaffoldState = null,
+        title = R.string.device_image,
+        image = R.drawable.capture_code,
+        deviceImage = null,
+        isDone = false,
+        isEnabled = true,
+        imageUploaded = {},
+        openImage = {}
+    )
 }

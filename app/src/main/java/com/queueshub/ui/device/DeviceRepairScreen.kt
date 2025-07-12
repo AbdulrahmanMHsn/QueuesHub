@@ -334,15 +334,23 @@ fun SelectableWidget(
     }
 }
 
-@Preview(locale = "ar")
-@Composable
-fun SelectableWidgetPreview() {
-    SelectableWidget(
-        modifier = Modifier, true, 1, Maintenance(1, "", "",true), {}) {}
-}
-
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DeviceRepairScreenPreview() {
-    DeviceRepairScreen()
+    // Mock data for preview
+    val mockMaintenance = Maintenance(
+        id = 1,
+        name = "صيانة GPS",
+        description = "إصلاح مشاكل GPS",
+        needsDescription = true
+    )
+    
+    SelectableWidget(
+        modifier = Modifier.padding(8.dp),
+        isSelected = true,
+        id = 1L,
+        maintenance = mockMaintenance,
+        onToggleChange = {},
+        onTextChanged = {}
+    )
 }

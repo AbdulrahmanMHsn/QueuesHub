@@ -1,11 +1,11 @@
 package com.queueshub.data.api
 object ApiConstants {
     // dev
-//    const val BASE_ENDPOINT = "https://stg-scanner-api.infinity-egy.net/api/"
-//    const val BASE_URL = "https://stg-scanner-api.infinity-egy.net/"
+    const val BASE_ENDPOINT = "https://stg-scanner-api.infinity-egy.net/api/"
+    const val BASE_URL = "https://stg-scanner-api.infinity-egy.net/"
 
-    const val BASE_ENDPOINT = "https://scanner-api.infinity-egy.net/api/"
-    const val BASE_URL = "https://scanner-api.infinity-egy.net/"
+//    const val BASE_ENDPOINT = "https://scanner-api.infinity-egy.net/api/"
+//    const val BASE_URL = "https://scanner-api.infinity-egy.net/"
     const val LOGIN_ENDPOINT = "auth/loginMobile"
     const val CURRENT_ENDPOINT = "orderCar/getOrderCarsForOrder"
     const val MY_ORDERS_ENDPOINT = "order/getMyCurrentOrders"

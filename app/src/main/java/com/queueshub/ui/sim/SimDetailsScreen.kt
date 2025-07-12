@@ -1,5 +1,6 @@
 package com.queueshub.ui.sim
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,6 +14,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -203,8 +205,44 @@ fun SimDetailsScreen(
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun SimDetailsScreenPreview() {
-    SimDetailsScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "بيانات الشريحة",
+            style = MaterialTheme.typography.subtitle1
+        )
+        
+        // Mock dropdown
+        AppDropdownMenu(
+            modifier = Modifier.fillMaxWidth(),
+            value = "فودافون",
+            label = R.string.sim_provider,
+            options = listOf("فودافون", "اتصالات", "اورانج", "وي")
+        ) {}
+        
+        // Mock input fields
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم المسلسل",
+            content = "892002201234567",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Next
+        ) {}
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم GSM",
+            content = "01234567890",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Done
+        ) {}
+    }
 }

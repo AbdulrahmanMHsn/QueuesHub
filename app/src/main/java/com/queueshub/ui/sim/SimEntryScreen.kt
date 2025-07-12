@@ -395,8 +395,32 @@ fun SIMCardContent(
         })
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun SimEntryScreenPreview() {
-    SimEntryScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "بيانات الشريحة",
+            style = MaterialTheme.typography.subtitle1
+        )
+        Text(
+            text = "التقط صور الشريحة",
+            style = MaterialTheme.typography.subtitle2
+        )
+        
+        DeviceCardContent(
+            modifier = Modifier.fillMaxWidth(),
+            scaffoldState = null,
+            title = R.string.sim_image,
+            deviceImage = null,
+            isDone = false,
+            isEnabled = true,
+            imageUploaded = {},
+            openImage = {}
+        )
+    }
 }

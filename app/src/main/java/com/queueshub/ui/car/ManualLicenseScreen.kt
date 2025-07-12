@@ -1,9 +1,9 @@
-
 package com.queueshub.ui.car
 
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -222,8 +222,41 @@ fun ManualLicenseScreen(paddingValues: PaddingValues = PaddingValues(), router: 
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun ManualLicenseScreenPreview() {
-    ManualLicenseScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier.padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "بيانات العربية",
+            style = MaterialTheme.typography.subtitle1
+        )
+        Text(
+            text = "حالة العربية",
+            style = MaterialTheme.typography.subtitle2
+        )
+        
+        // Mock input fields
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم اللوحة",
+            content = "ABC123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next,
+            isEnabled = true
+        ) {}
+        
+        InputField(
+            modifier = Modifier.fillMaxWidth(),
+            text = "رقم الشاسيه",
+            content = "CHASSIS123",
+            onValueChange = {},
+            keyboardType = KeyboardType.Number,
+            imeAction = ImeAction.Go
+        ) {}
+    }
 }

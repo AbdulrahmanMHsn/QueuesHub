@@ -39,6 +39,7 @@ class AppViewModel @Inject constructor(
     var goingBack: Boolean= false
     private lateinit var finalOrderType: java.util.ArrayList<String>
     var selectedOrder: Order? = null
+    var isAnyOrderOnProgress: Boolean = false
     var showedInfo: Boolean = false
     var orderType: OrderType = OrderType.UNDEFINED
 
@@ -224,6 +225,7 @@ class AppViewModel @Inject constructor(
     }
 
     var plateText: String = ""
+    var technicalStart: String = ""
 
     //        "gitell\n" + ", مصر\n" + "ن ط ب ٣٩٥\n" + ", EGYPT\n" + ", 395\n" + ", B T N\n"
     var simText: String = ""
@@ -325,7 +327,8 @@ class AppViewModel @Inject constructor(
                             licenseImage,
                             licenseImage2,
                             chasisImage,
-                            notes
+                            notes,
+                            technicalStart
                         )
                         it.copy(loading = false, success = true)
                     } catch (e: IOException) {
@@ -382,6 +385,7 @@ class AppViewModel @Inject constructor(
         simImage = null
         maintenanceFile = null
         licenseText = ""
+        technicalStart = ""
 
         plateInfoAuto = false
         licenseAuto = false

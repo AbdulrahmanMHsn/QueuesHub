@@ -63,7 +63,7 @@ fun DoneScreen(
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DoneScreenPreview() {
     DoneScreen()

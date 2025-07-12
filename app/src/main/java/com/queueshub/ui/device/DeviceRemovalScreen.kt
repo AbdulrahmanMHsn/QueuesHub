@@ -223,8 +223,15 @@ fun MultiToggleButton(
     }
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DeviceRemovalScreenPreview() {
-    DeviceRemovalScreen()
+    // Mock data for preview
+    val mockAppViewModel = hiltViewModel<AppViewModel>()
+    
+    MultiToggleButton(
+        viewModel = mockAppViewModel,
+        modifier = Modifier.padding(16.dp),
+        onToggleChange = {}
+    )
 }

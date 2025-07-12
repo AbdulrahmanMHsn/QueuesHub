@@ -602,8 +602,28 @@ fun MultiSelectGroup(
 
 }
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun DeviceDetailsScreenPreview() {
-    DeviceDetailsScreen()
+    // Mock data for preview
+    val mockSensors = listOf(
+        Sensor(
+            id = 1,
+            name = "حساس GPS",
+            path = "sensor1.png",
+            needAttach = true,
+            isTawreed = true,
+            file = null
+        ),
+        Sensor(
+            id = 2,
+            name = "حساس الحرارة",
+            path = "sensor2.png",
+            needAttach = false,
+            isTawreed = false,
+            file = null
+        )
+    )
+    
+    SensorsHeader(modifier = Modifier)
 }

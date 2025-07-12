@@ -21,6 +21,7 @@ import com.queueshub.ui.main.AppButton
 import com.queueshub.ui.main.DialogBoxLoading
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.viewStates.CreateOrderViewState
+import androidx.compose.ui.tooling.preview.Preview
 
 
 @Composable
@@ -105,4 +106,20 @@ fun NoteBox(sharedViewModel: AppViewModel, uiState: CreateOrderViewState) {
             sharedViewModel.createOrder(notes)
         }
     }
+}
+
+@Preview(locale = "ar", showBackground = true)
+@Composable
+fun OrderNoteScreenPreview() {
+    // Mock data for preview
+    val mockCreateOrderViewState = CreateOrderViewState(
+        loading = false,
+        success = false,
+        failure = null
+    )
+    
+    NoteBox(
+        sharedViewModel = hiltViewModel(),
+        uiState = mockCreateOrderViewState
+    )
 }

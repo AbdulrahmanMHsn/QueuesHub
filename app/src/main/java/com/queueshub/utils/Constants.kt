@@ -7,6 +7,7 @@ enum class OrderType(val value: String) {
     REMOVE_DEVICE("3L"),
     REPLACE_SIM("4L"),
     REPLACE_PLATE("5L"),
+    ADD_NEW_FEATURE("6L"),
     UNDEFINED("-1L")
 }
 

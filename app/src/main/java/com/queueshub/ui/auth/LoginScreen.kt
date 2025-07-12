@@ -132,8 +132,50 @@ fun LoginScreen(
 }
 
 
-@Preview(locale = "ar")
+@Preview(locale = "ar", showBackground = true)
 @Composable
 fun LoginPreview() {
-    LoginScreen()
+    // Mock data for preview
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 56.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            text = "أهلاً بعودتك!",
+            style = MaterialTheme.typography.subtitle1
+        )
+        Text(
+            text = "ادخل بياناتك لتسجيل الدخول على حسابك الشخصي",
+            style = MaterialTheme.typography.subtitle2
+        )
+        Spacer(
+            modifier = Modifier.height(height = 45.dp)
+        )
+        
+        // Mock input fields
+        InputField(
+            stringResource(id = R.string.phone),
+            KeyboardType.Phone,
+            "01234567890",
+            onValueChange = {},
+            imeAction = ImeAction.Next
+        ) {}
+
+        InputField(
+            stringResource(id = R.string.password),
+            KeyboardType.NumberPassword,
+            "123456",
+            onValueChange = {},
+            imeAction = ImeAction.Go
+        ) {}
+        
+        AppButton(
+            modifier = Modifier.padding(top = 80.dp),
+            text = R.string.login
+        ) {}
+    }
 }
