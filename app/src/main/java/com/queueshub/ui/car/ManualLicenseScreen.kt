@@ -183,7 +183,7 @@ fun ManualLicenseScreen(paddingValues: PaddingValues = PaddingValues(), router: 
                 sharedViewModel.shaseh = it
                 sharedViewModel.updateUI()
             },
-            keyboardType = KeyboardType.Number,
+            keyboardType = KeyboardType.Text,
             imeAction = ImeAction.Go
         ) {
             goDeviceEntry()

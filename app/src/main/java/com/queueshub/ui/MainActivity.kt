@@ -100,35 +100,48 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
+// Log tag for MainActivity
 val TAG: String = "Main Activity"
+// Folder name for storing captured images
 val FOLDER_IMAGES: String = "QueuesHub"
+// Executor service for camera operations to run on background thread
 private lateinit var cameraExecutor: ExecutorService
+// ImageCapture use case for taking photos
 lateinit var imageCapture: ImageCapture
+// Output file options for saving captured images
 lateinit var outputFileOptions: ImageCapture.OutputFileOptions
 
 
+// Dagger Hilt entry point for dependency injection
 @AndroidEntryPoint
 class MainActivity : ComponentActivity(), GlobalNavigationHandler {
+    // Timestamp for tracking back button presses to implement double-tap to exit
     private var backPressed = 0L
+    // Main activity view model injected by Hilt
     val viewModel: MainActivityViewModel by viewModels()
 
 
+    // Override base context to set Arabic locale for the entire app
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(ContextWrapper(newBase.setLocale(Locale("ar"))))
     }
 
+    // Activity lifecycle method - called when activity is first created
     @ExperimentalFoundationApi
     @ExperimentalMaterialApi
     @ExperimentalComposeUiApi
     @ExperimentalAnimationApi
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install splash screen that shows while app is loading
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        // Initialize single thread executor for camera operations
         cameraExecutor = Executors.newSingleThreadExecutor()
 
+        // Mutable state to track UI loading state
         var uiState: MainActivityUiState by mutableStateOf(MainActivityUiState.Loading)
         val viewModel =
-            // Update the uiState
+            // Launch coroutine to observe UI state changes from ViewModel
             lifecycleScope.launch {
                 lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                     viewModel.uiState.onEach {
@@ -137,90 +150,110 @@ class MainActivity : ComponentActivity(), GlobalNavigationHandler {
                 }
             }
 
+        // Keep splash screen visible while app is in loading state
         splashScreen.setKeepOnScreenCondition {
             when (uiState) {
                 MainActivityUiState.Loading -> true
                 is MainActivityUiState.Success -> false
             }
         }
+        // Set up Compose UI content
         setContent {
+            // Get Firebase messaging token for push notifications
             FirebaseMessaging.getInstance().token.addOnSuccessListener {
                 Log.e("token is", it)
             }
+            // Request notification permissions from user
             askNotificationPermission()
+            // Apply app theme
             BasicStateTheme {
-                // A surface container using the 'background' color from the theme
+                // Check if user is logged in and navigate accordingly
                 if (uiState is MainActivityUiState.Success) if ((uiState as MainActivityUiState.Success).logged) {
                     Log.e("topic  is", "user_${(uiState as MainActivityUiState.Success).userId}")
-
+                    // Subscribe to user-specific Firebase topic for notifications
                     FirebaseMessaging.getInstance()
                         .subscribeToTopic("user_${(uiState as MainActivityUiState.Success).userId}")
+                    // Navigate to Orders screen for logged in users
                     myApp(finish = finish, Screen.Orders.route)
                 } else {
+                    // Navigate to Login screen for non-logged in users
                     myApp(finish = finish, Screen.Login.route)
                 }
             }
         }
     }
 
+    // Activity lifecycle method - called when activity becomes visible
     override fun onStart() {
         super.onStart()
+        // Register this activity as global navigation handler
         GlobalNavigator.registerHandler(this)
     }
 
+    // Activity lifecycle method - called when activity is no longer visible
     override fun onStop() {
         super.onStop()
+        // Unregister global navigation handler to prevent memory leaks
         GlobalNavigator.unregisterHandler()
     }
 
+    // Activity lifecycle method - called when activity is destroyed
     override fun onDestroy() {
         super.onDestroy()
     }
 
-    // Declare the launcher at the top of your Activity/Fragment:
+    // Activity result launcher for requesting notification permission
+    // Handles the result of POST_NOTIFICATIONS permission request
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission(),
     ) { isGranted: Boolean ->
         if (isGranted) {
-            // FCM SDK (and your app) can post notifications.
+            // Permission granted - FCM SDK can post notifications
         } else {
+            // Permission denied - show Arabic message to user
             Toast.makeText(this, "لن نتمكن من التواصل معك عن طريق الاشعارات", Toast.LENGTH_SHORT)
                 .show()
         }
     }
 
+    // Request notification permission from user (Android 13+ only)
     private fun askNotificationPermission() {
-        // This is only necessary for API level >= 33 (TIRAMISU)
+        // POST_NOTIFICATIONS permission is only required for API level 33 (TIRAMISU) and above
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED
             ) {
-                // FCM SDK (and your app) can post notifications.
+                // Permission already granted - FCM can post notifications
             } else if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                // TODO: display an educational UI explaining to the user the features that will be enabled
-                //       by them granting the POST_NOTIFICATION permission. This UI should provide the user
-                //       "OK" and "No thanks" buttons. If the user selects "OK," directly request the permission.
-                //       If the user selects "No thanks," allow the user to continue without notifications.
+                // TODO: Show educational UI explaining why notification permission is needed
+                // Should provide "OK" and "No thanks" buttons for user choice
+                // If "OK" selected, request permission; if "No thanks", continue without notifications
             } else {
-                // Directly ask for the permission
+                // Request permission directly using the launcher
                 requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
 
+    // Function to handle app exit with double-tap confirmation
     private val finish: () -> Unit = {
+        // If back was pressed within last 3 seconds, exit app
         if (backPressed + 3000 > System.currentTimeMillis()) {
             finishAndRemoveTask()
         } else {
+            // Show Arabic message asking user to press again to exit
             Toast.makeText(
                 this, "اضغط مرة اخري للخروج", Toast.LENGTH_SHORT
             ).show()
         }
+        // Record current time for next back press check
         backPressed = System.currentTimeMillis()
     }
 
+    // Implementation of GlobalNavigationHandler interface
+    // Handles user logout by clearing data and restarting activity
     override fun logout() {
         viewModel.logout()
         val intent: Intent = intent
@@ -229,33 +262,45 @@ class MainActivity : ComponentActivity(), GlobalNavigationHandler {
     }
 }
 
+// Main Compose function that sets up app navigation and UI structure
 @ExperimentalFoundationApi
 @ExperimentalComposeUiApi
 @ExperimentalAnimationApi
 @ExperimentalMaterialApi
 @Composable
 private fun myApp(finish: () -> Unit, startDestination: String) {
+    // Remember scaffold state for managing UI components like drawer, snackbar
     val scaffoldState = rememberScaffoldState()
+    // Navigation controller for managing app navigation
     val navController = rememberNavController()
+    // Current navigation destination state
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    // App-level ViewModel injected by Hilt
     val viewModel: AppViewModel = hiltViewModel()
+    // Observe user login state
     val userLogged by viewModel.userLogged.collectAsState()
     val isLogged = userLogged.first
+    // Get current route or use start destination as fallback
     val route = navBackStackEntry?.destination?.route ?: startDestination
+    // Router implementation for navigation logic
     val router: Router = remember { RouterImpl(navController, route) }
 
+    // Handle back button press on main screens (Home/Login) to exit app
     if (route == Screen.Home.route || route == Screen.Login.route) {
         BackHandler {
             finish()
         }
     }
+    // Main scaffold container with navigation setup
     Scaffold(modifier = Modifier
         .semantics {
+            // Enable test tags as resource IDs for UI testing
             testTagsAsResourceId = true
         }
-        .background(Color(0xFFE9E9E9)),
+        .background(Color(0xFFE9E9E9)), // Light gray background
         scaffoldState = scaffoldState,
         content = { innerPadding ->
+            // Main navigation container with all app screens
             NavigationContainer(
                 navController = navController,
                 scaffoldState = scaffoldState,
@@ -266,21 +311,29 @@ private fun myApp(finish: () -> Unit, startDestination: String) {
         })
 }
 
+// Utility function to generate image filename with timestamp
 fun makeImageName(currentTime: Long): String {
     return "Image $currentTime.jpg"
 }
 
+// Camera preview composable for scanning device serial numbers and IMEI codes
+// Scans barcodes and automatically detects IMEI (15 digits) vs serial numbers
 @SuppressLint("ClickableViewAccessibility")
 @Composable
 fun CameraBarcodePreview(
     onUpdateSerial: (String) -> Unit, onUpdateIMEI: (String) -> Unit, onCloseScanner: () -> Unit
 ) {
+    // Get current context and lifecycle owner for camera operations
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Camera preview state
     var preview by remember { mutableStateOf<Preview?>(null) }
+    // Flashlight toggle state
     var enabledTorch by remember { mutableStateOf<Boolean>(false) }
+    // Scanned IMEI and serial number states
     var imei by remember { mutableStateOf("") }
     var serial by remember { mutableStateOf("") }
+    // Counter for scanning progress display
     var count = 0
 
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
@@ -404,17 +457,24 @@ fun CameraBarcodePreview(
     }
 }
 
+// Camera preview composable for scanning SIM card barcodes
+// Specifically designed to scan GSM numbers and IMEI codes from SIM cards
 @SuppressLint("ClickableViewAccessibility")
 @Composable
 fun CameraSIMBarcodePreview(
     onUpdateGsm: (String) -> Unit, onUpdateIMEI: (String) -> Unit, onCloseScanner: () -> Unit
 ) {
+    // Context and lifecycle for camera operations
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    // Flashlight toggle state
     var enabledTorch by remember { mutableStateOf<Boolean>(false) }
+    // Camera preview state
     var preview by remember { mutableStateOf<Preview?>(null) }
+    // Scanned IMEI and GSM number states
     var imei by remember { mutableStateOf("") }
     var gsm by remember { mutableStateOf("") }
+    // Counter for tracking scan progress
     var count by remember { mutableStateOf(0) }
 
     Box(contentAlignment = Alignment.BottomCenter, modifier = Modifier.fillMaxSize()) {
@@ -542,6 +602,8 @@ fun CameraSIMBarcodePreview(
     }
 }
 
+// Generic camera preview composable for capturing and analyzing images
+// Supports different camera types like device photos, car plates, licenses, etc.
 @ExperimentalGetImage
 @Composable
 fun CameraPreview(
@@ -553,11 +615,14 @@ fun CameraPreview(
     onTryAgain: () -> Unit = {},
     onAnalyzerFinished: (String, File) -> Unit,
 ) {
+    // Get context, coroutine scope, and lifecycle owner for camera operations
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val lifecycleOwner = LocalLifecycleOwner.current
 
+    // Flashlight toggle state
     var enabledTorch by remember { mutableStateOf<Boolean>(false) }
+    // PreviewView for camera display with full screen layout
     val previewView = remember {
         PreviewView(context).apply {
             this.scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -566,7 +631,6 @@ fun CameraPreview(
                 ViewGroup.LayoutParams.MATCH_PARENT,
             )
             implementationMode = PreviewView.ImplementationMode.COMPATIBLE
-
         }
     }
 
@@ -618,8 +682,11 @@ fun CameraPreview(
     }
 }
 
+// Global variable to hold the last captured image for cleanup
 var lastImage: ImageProxy? = null
 
+// Main image capture and processing function
+// Handles different camera types and applies appropriate image analysis
 @androidx.camera.core.ExperimentalGetImage
 fun onClick(
     context: Context,
@@ -627,16 +694,21 @@ fun onClick(
     onAnalyzerFinished: (String, File) -> Unit,
     onTryAgain: () -> Unit
 ) {
+    // Close previous image to free memory
     lastImage?.close()
 
+    // Capture image using camera executor
     imageCapture.takePicture(cameraExecutor, object : ImageCapture.OnImageCapturedCallback() {
         override fun onCaptureSuccess(image: ImageProxy) {
+            // Store reference to current image
             lastImage = image
 
             Log.i("DDDD", "onCaptureSuccess: ${image.imageInfo.rotationDegrees}")
 
+            // Convert image to JPEG byte array
             val byteArray = com.queueshub.utils.ImageUtil.jpegImageToJpegByteArray(image)
 
+            // Create temporary file for the captured image
             val file = File(
                 context.cacheDir,
                 String.format("%s.png", UUID.randomUUID().toString().replace("-", ""))
@@ -644,29 +716,34 @@ fun onClick(
             file.createNewFile()
             file.writeBytes(byteArray)
 
+            // Process image based on camera type
             when (type) {
+                // Basic device photo capture - no text analysis
                 CameraType.DEVICE -> {
                     onAnalyzerFinished(
                         "", file
                     )
                 }
 
+                // Sensor photo capture - no text analysis
                 CameraType.SENSOR -> {
                     onAnalyzerFinished(
                         "", file
                     )
                 }
 
-
+                // Chassis photo capture - no text analysis
                 CameraType.SHASIS -> {
                     onAnalyzerFinished(
                         "", file
                     )
                 }
 
+                // Device capture with car license analysis
                 CameraType.DEVICE_CAPTURE -> {
                     CarLicenseAnalyzer(object : OnAnalyzerFinished {
                         override fun onAnalyzerDone(x: ArrayList<String>) {
+                            // Join detected strings and return result
                             onAnalyzerFinished(
                                 x.joinToString(","), file
                             )
@@ -678,32 +755,29 @@ fun onClick(
                     }).analyze(image)
                 }
 
+                // Car license plate text recognition using Firebase ML
                 CameraType.CAR_PLATE -> {
                     try {
+                        // Create Firebase Vision image from captured file
                         val firebaseVisionImage =
                             FirebaseVisionImage.fromFilePath(context, file.toUri())
 
+                        // Configure text recognizer for Arabic language
                         val options = FirebaseVisionCloudTextRecognizerOptions.Builder()
                             .setLanguageHints(listOf("ar")).build()
                         val recognizer =
                             FirebaseVision.getInstance().getCloudTextRecognizer(options)
                         val result = recognizer.processImage(firebaseVisionImage)
                             .addOnSuccessListener { firebaseVisionText ->
+                                // Extract and join all detected text blocks
                                 onAnalyzerFinished(
                                     firebaseVisionText.textBlocks.joinToString { it.text }, file
                                 )
-//                                val x = firebaseVisionText.text.lines().toString().replace(
-//                                    """^[\u0621-\u064A\u0660-\u0669 ]+${'$'}""".toRegex(),
-//                                    ""
-//                                )
-
                             }.addOnFailureListener { e ->
+                                // Return empty result on failure
                                 onAnalyzerFinished(
                                     "", file
                                 )
-//                                "17x35"
-                                // Task failed with an exception
-                                // ...
                             }
                     } catch (e: IOException) {
                         e.printStackTrace()
@@ -718,23 +792,25 @@ fun onClick(
 //                        }).analyze(image)
                 }
 
+                // Car license document text recognition
                 CameraType.CAR_LICENSE -> {
-
                     val image: FirebaseVisionImage
                     try {
+                        // Create Firebase Vision image from file
                         image = FirebaseVisionImage.fromFilePath(context, file.toUri())
 
+                        // Configure for Arabic text recognition
                         val options = FirebaseVisionCloudTextRecognizerOptions.Builder()
                             .setLanguageHints(listOf("ar")).build()
                         val detector = FirebaseVision.getInstance().getCloudTextRecognizer(options)
                         val result = detector.processImage(image)
                             .addOnSuccessListener { firebaseVisionText ->
+                                // Extract and return detected text
                                 onAnalyzerFinished(
                                     firebaseVisionText.textBlocks.joinToString { it.text }, file
                                 )
                             }.addOnFailureListener { e ->
-                                // Task failed with an exception
-                                // ...
+                                // Handle recognition failure
                                 onAnalyzerFinished(
                                     "", file
                                 )
@@ -856,12 +932,13 @@ fun onClick(
 
 }
 
+// Firebase function to annotate images using Google Cloud Vision API
+// Currently unused but available for advanced image analysis
 private fun annotateImage(requestJson: String): Task<JsonElement> {
     return Firebase.functions.getHttpsCallable("annotateImage").call(requestJson)
         .continueWith { task ->
-            // This continuation runs on either success or failure, but if the task
-            // has failed then result will throw an Exception which will be
-            // propagated down.
+            // Process the result regardless of success or failure
+            // If failed, an exception will be thrown and propagated
             val result = task.result?.data
             JsonParser.parseString(Gson().toJson(result))
         }
@@ -885,12 +962,15 @@ private fun annotateImage(requestJson: String): Task<JsonElement> {
 //    }
 //}
 
+// Process Firebase Vision text blocks and extract individual lines
+// Returns a list of text strings from all detected text blocks
 private fun processTextBlock(text: FirebaseVisionText): List<String> {
     val list:MutableList<String> = mutableListOf()
     val blocks: List<FirebaseVisionText.TextBlock> = text.textBlocks
     if (blocks.isEmpty()) {
         return list
     }
+    // Iterate through all text blocks and extract line text
     for (i in blocks.indices) {
         val lines = blocks[i].lines
         for (j in lines.indices) {
@@ -918,15 +998,19 @@ private fun processTextBlock(text: FirebaseVisionText): List<String> {
 //}
 //
 //
+// Rotate bitmap image based on EXIF orientation data
+// Fixes orientation issues when images are captured in different orientations
 @Throws(IOException::class)
 fun rotateImage(context: Context, bitmap: Bitmap, image: (Bitmap) -> Unit) {
     var rotate = 0
+    // Read EXIF data to determine original orientation
     val exif = ExifInterface(bitmap.toFile(context).path)
     val orientation: Int = exif.getAttributeInt(
         ExifInterface.TAG_ORIENTATION,
         ExifInterface.ORIENTATION_NORMAL
     )
 
+    // Determine rotation angle based on EXIF orientation
     when (orientation) {
         ExifInterface.ORIENTATION_ROTATE_270 -> rotate = 270
         ExifInterface.ORIENTATION_ROTATE_180 -> rotate = 180
@@ -934,12 +1018,14 @@ fun rotateImage(context: Context, bitmap: Bitmap, image: (Bitmap) -> Unit) {
     }
     Log.i("TAGTAGTAG", "rotateImage: $rotate")
 
+    // Apply rotation transformation to bitmap
     val matrix = Matrix()
     matrix.postRotate(rotate.toFloat())
     val newBitmap = Bitmap.createBitmap(
         bitmap, 0, 0, bitmap.width,
         bitmap.height, matrix, true
     )
+    // Return rotated bitmap via callback
     image(newBitmap)
 }
 //

@@ -288,6 +288,15 @@ private fun CarsListSection(
         // Add more cars button (if all cars are finished)
         if (order.finishedCars >= order.numberOfCars) {
             item {
+                try {
+                    val date = Date()
+                    val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+                    val formatted = formatter.format(date)
+                    sharedViewModel.technicalStart = formatted
+                }catch (e: Exception) {
+                    sharedViewModel.technicalStart = Date().toString()
+                }
+
                 AddCarButton(onClick = goCarInfo)
             }
         }
