@@ -102,12 +102,16 @@ import java.util.concurrent.Executors
 
 // Log tag for MainActivity
 val TAG: String = "Main Activity"
+
 // Folder name for storing captured images
 val FOLDER_IMAGES: String = "QueuesHub"
+
 // Executor service for camera operations to run on background thread
 private lateinit var cameraExecutor: ExecutorService
+
 // ImageCapture use case for taking photos
 lateinit var imageCapture: ImageCapture
+
 // Output file options for saving captured images
 lateinit var outputFileOptions: ImageCapture.OutputFileOptions
 
@@ -117,6 +121,7 @@ lateinit var outputFileOptions: ImageCapture.OutputFileOptions
 class MainActivity : ComponentActivity(), GlobalNavigationHandler {
     // Timestamp for tracking back button presses to implement double-tap to exit
     private var backPressed = 0L
+
     // Main activity view model injected by Hilt
     val viewModel: MainActivityViewModel by viewModels()
 
@@ -502,14 +507,19 @@ fun CameraSIMBarcodePreview(
                 val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
                 val barcodeAnalyser = BarcodeAnalyzer { barcodes ->
                     val barcode = barcodes.first()
+
+                    Logger.d("barcode: 1 $barcodes")
+                    Logger.d("barcode: 2 $barcode")
+                    Logger.d("barcode: 3 ${barcode.rawValue}")
+
                     barcode.rawValue?.let { barcodeValue ->
                         if (barcodeValue.isDigitsOnly() && barcodeValue.length > 12 && imei == "") {
                             imei = barcodeValue
                             count++
                             onUpdateIMEI(imei)
-                        } else if ((barcodeValue.length == 11 && barcodeValue.startsWith("01")) || (barcodeValue.length == 12 && barcodeValue.startsWith(
-                                "201"
-                            )) && gsm == ""
+                        } else if ((barcodeValue.length == 11 && barcodeValue.startsWith("01"))
+                            || (barcodeValue.length == 12 && barcodeValue.startsWith("201"))
+                            && gsm == ""
                         ) {
                             count++
                             gsm = barcodeValue
@@ -519,6 +529,11 @@ fun CameraSIMBarcodePreview(
                         if (imei != "" && gsm != "") {
                             onCloseScanner()
                         }
+
+
+                        Logger.d("barcode: 4 $barcodeValue")
+                        Logger.d("barcode: 5 $imei")
+                        Logger.d("barcode: 6 $gsm")
                     }
 
                 }
@@ -866,29 +881,41 @@ fun onClick(
                 CameraType.SIM_CAPTURE -> {
                     SIMAnalyzer(object : OnSIMAnalyzerFinished {
                         override fun onAnalyzerDone(serial: String?, gsm: String?) {
-                            if (!serial.isNullOrEmpty() || !gsm.isNullOrEmpty()) onAnalyzerFinished(
-                                "$serial,$gsm", file
-                            )
+                            Logger.d("serail $serial")
+                            Logger.d("gsm $gsm")
+                            if (!serial.isNullOrEmpty() || !gsm.isNullOrEmpty())
+                                onAnalyzerFinished("$serial,$gsm", file)
                             else {
                                 val image: FirebaseVisionImage
                                 try {
                                     image = FirebaseVisionImage.fromFilePath(context, file.toUri())
 
+                                    // val options = FirebaseVisionCloudTextRecognizerOptions.Builder().setLanguageHints(listOf("en")).build()
                                     val options = FirebaseVisionCloudTextRecognizerOptions.Builder()
-                                        .setLanguageHints(listOf("en")).build()
+                                        .setLanguageHints(listOf("en", "ar")) // "en",
+                                        .build()
                                     val detector =
                                         FirebaseVision.getInstance().getCloudTextRecognizer(options)
                                     val result = detector.processImage(image)
                                         .addOnSuccessListener { firebaseVisionText ->
-                                            var serial = ""
-                                            firebaseVisionText.textBlocks.forEach {
-                                                val text =
-                                                    it.text.replace("\n", "").replace(" ", "")
-                                                var numbers = text.filter { it.isDigit() }
-                                                if (numbers.length > 11) serial = numbers
-                                            }
+
+                                            Logger.d("OnSIMAnalyzerFinished 1 $firebaseVisionText")
+                                            Logger.d("OnSIMAnalyzerFinished 2 ${firebaseVisionText.textBlocks}")
+                                            Logger.d("OnSIMAnalyzerFinished 3 ${firebaseVisionText.textBlocks.joinToString { it.text }}")
+                                            Logger.d("OnSIMAnalyzerFinished 4 ${firebaseVisionText.text.lines()}")
+
+//                                            var serial = ""
+//                                            firebaseVisionText.textBlocks.forEach {
+//                                                val text =
+//                                                    it.text.replace("\n", "").replace(" ", "")
+//                                                var numbers = text.filter { it.isDigit() }
+//                                                if (numbers.length > 11) serial = numbers
+//                                            }
+//                                            onAnalyzerFinished(
+//                                                "$serial,", file
+//                                            )
                                             onAnalyzerFinished(
-                                                "$serial,", file
+                                                firebaseVisionText.textBlocks.joinToString { it.text }, file
                                             )
                                         }.addOnFailureListener { e ->
                                             // Task failed with an exception
@@ -965,7 +992,7 @@ private fun annotateImage(requestJson: String): Task<JsonElement> {
 // Process Firebase Vision text blocks and extract individual lines
 // Returns a list of text strings from all detected text blocks
 private fun processTextBlock(text: FirebaseVisionText): List<String> {
-    val list:MutableList<String> = mutableListOf()
+    val list: MutableList<String> = mutableListOf()
     val blocks: List<FirebaseVisionText.TextBlock> = text.textBlocks
     if (blocks.isEmpty()) {
         return list
@@ -974,7 +1001,7 @@ private fun processTextBlock(text: FirebaseVisionText): List<String> {
     for (i in blocks.indices) {
         val lines = blocks[i].lines
         for (j in lines.indices) {
-         list.add(lines[j].text)
+            list.add(lines[j].text)
         }
     }
     return list

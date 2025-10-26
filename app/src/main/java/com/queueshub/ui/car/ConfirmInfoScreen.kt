@@ -32,6 +32,7 @@ import com.queueshub.ui.main.InputField
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.DarkRed
 import com.queueshub.ui.theme.SpanishGreen
+import com.queueshub.utils.Logger
 
 @Composable
 fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Router? = null) {
@@ -53,8 +54,10 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
             sharedViewModel.extractDataFromPlate()
         }
         if (sharedViewModel.licenseAuto) {
-            sharedViewModel.extractDataFromLicense()
+            // sharedViewModel.extractDataFromLicense()
+            sharedViewModel.finalExtractDataFromCarLicense()
         }
+
     }
     sharedViewModel.onUpdate.value
     val isNextAvailable = sharedViewModel.plateNum != ""
@@ -119,14 +122,15 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
         }
         val options = modelsState.models ?: listOf()
         var selectedOptionText by rememberSaveable { mutableStateOf(sharedViewModel.carModel) }
-        AppDropdownMenu(modifier = Modifier
-            .fillMaxWidth()
-            .constrainAs(carType) {
-                top.linkTo(working.bottom, margin = 4.dp)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+        AppDropdownMenu(
+            modifier = Modifier
+                .fillMaxWidth()
+                .constrainAs(carType) {
+                    top.linkTo(working.bottom, margin = 4.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             label = R.string.car_type,
             value = selectedOptionText,
             options = options) {
@@ -135,22 +139,26 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
             selectedOptionText = it
         }
 
-        Row(modifier = Modifier
-            .constrainAs(model) {
-                top.linkTo(carType.bottom, margin = 16.dp)
-                start.linkTo(parent.start)
-                end.linkTo(color.start)
-            }
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+        Row(
+            modifier = Modifier
+                .constrainAs(model) {
+                    top.linkTo(carType.bottom, margin = 16.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(color.start)
+                }
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)) {
 
             var modelText by rememberSaveable { mutableStateOf(sharedViewModel.year) }
             var colorText by rememberSaveable { mutableStateOf(sharedViewModel.color) }
+
+            Logger.d("ConfirmInfoScreen modelText $modelText")
+            Logger.d("ConfirmInfoScreen colorText $colorText")
             InputField(
                 modifier = Modifier.weight(1f),
                 text = stringResource(id = R.string.model_name),
                 keyboardType = KeyboardType.Text,
-                content = modelText,
+                content = sharedViewModel.year,
                 onValueChange = {
                     modelText = it
                 },
@@ -161,7 +169,7 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
                 modifier = Modifier.weight(1f),
                 text = stringResource(id = R.string.color),
                 keyboardType = KeyboardType.Text,
-                content = colorText,
+                content = sharedViewModel.color,
                 onValueChange = {
                     colorText = it
                 },
@@ -171,16 +179,26 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
         }
         var plateText = sharedViewModel.plateNum
         Log.i("TAGTAGTAG", "ConfirmInfoScreen: ${sharedViewModel.plateNum}")
+
         var modelText = sharedViewModel.shaseh
         var motorText by rememberSaveable { mutableStateOf(sharedViewModel.motor) }
-        InputField(modifier = Modifier
-            .fillMaxWidth()
-            .constrainAs(plate) {
-                top.linkTo(model.bottom, margin = 16.dp)
-                start.linkTo(parent.start)
-                end.linkTo(parent.end)
-            }
-            .padding(horizontal = 24.dp, vertical = 8.dp),
+
+        Logger.d("ConfirmInfoScreen2 sharedViewModel.shaseh ${sharedViewModel.shaseh}")
+        Logger.d("ConfirmInfoScreen2 sharedViewModel.motor ${sharedViewModel.motor}")
+        Logger.d("ConfirmInfoScreen2 sharedViewModel.carModel ${sharedViewModel.carModel}")
+        Logger.d("ConfirmInfoScreen2 sharedViewModel.color ${sharedViewModel.color}")
+        Logger.d("ConfirmInfoScreen2 sharedViewModel.year ${sharedViewModel.year}")
+        Logger.d("ConfirmInfoScreen2 modelText $modelText")
+        Logger.d("ConfirmInfoScreen2 motorText $motorText")
+        InputField(
+            modifier = Modifier
+                .fillMaxWidth()
+                .constrainAs(plate) {
+                    top.linkTo(model.bottom, margin = 16.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+                .padding(horizontal = 24.dp, vertical = 8.dp),
             text = stringResource(id = R.string.plate_num),
             content = plateText,
             onValueChange = {
@@ -223,8 +241,10 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
             }
             .padding(horizontal = 24.dp, vertical = 8.dp),
             text = stringResource(id = R.string.motor_id),
-            content = motorText,
-            onValueChange = { motorText = it },
+            content = sharedViewModel.motor,
+            onValueChange = {
+                // motorText = it
+            },
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Go,
             isEnabled = false
@@ -245,14 +265,15 @@ fun ConfirmInfoScreen(paddingValues: PaddingValues = PaddingValues(), router: Ro
             val carYear = sharedViewModel.year
             val carStatus = if (sharedViewModel.carStatus == "working") "تعمل" else "لاتعمل"
 
-            val description = "تم إضافه بيانات العربيه (" + " ماركه :" + carModel + ", موديل : " + carYear + ", اللون :" + carColor + ", اللوحه : " + plateNum + ", الشاسيه : " + chassis + ", الموتور : " + motor + ", الحاله : " + carStatus + ")"
+            val description =
+                "تم إضافه بيانات العربيه (" + " ماركه :" + carModel + ", موديل : " + carYear + ", اللون :" + carColor + ", اللوحه : " + plateNum + ", الشاسيه : " + chassis + ", الموتور : " + motor + ", الحاله : " + carStatus + ")"
             val carDetails = ApiLogItem(
                 plateNum,
                 description = description,
                 type = "car_details",
                 sharedViewModel.selectedOrder?.id?.toInt(),
-                generatedId =sharedViewModel.generatedId,
-                )
+                generatedId = sharedViewModel.generatedId,
+            )
 
             val logArray = ArrayList<ApiLogItem>()
             logArray.add(carDetails)
@@ -279,7 +300,7 @@ fun ConfirmInfoScreenPreview() {
             text = "حالة العربية",
             style = MaterialTheme.typography.subtitle2
         )
-        
+
         // Mock dropdown
         AppDropdownMenu(
             modifier = Modifier.fillMaxWidth(),
@@ -287,7 +308,7 @@ fun ConfirmInfoScreenPreview() {
             label = R.string.car_type,
             options = listOf("تويوتا", "هوندا", "نيسان")
         ) {}
-        
+
         // Mock input fields
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -302,7 +323,7 @@ fun ConfirmInfoScreenPreview() {
                 imeAction = ImeAction.Next,
                 isEnabled = false
             ) {}
-            
+
             InputField(
                 modifier = Modifier.weight(1f),
                 text = "اللون",
@@ -313,7 +334,7 @@ fun ConfirmInfoScreenPreview() {
                 isEnabled = false
             ) {}
         }
-        
+
         InputField(
             modifier = Modifier.fillMaxWidth(),
             text = "رقم اللوحة",
@@ -323,7 +344,7 @@ fun ConfirmInfoScreenPreview() {
             imeAction = ImeAction.Next,
             isEnabled = true
         ) {}
-        
+
         InputField(
             modifier = Modifier.fillMaxWidth(),
             text = "رقم الشاسيه",
@@ -332,7 +353,7 @@ fun ConfirmInfoScreenPreview() {
             keyboardType = KeyboardType.Number,
             imeAction = ImeAction.Go
         ) {}
-        
+
         InputField(
             modifier = Modifier.fillMaxWidth(),
             text = "رقم الموتور",

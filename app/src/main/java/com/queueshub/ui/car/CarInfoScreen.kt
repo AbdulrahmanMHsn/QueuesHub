@@ -59,6 +59,7 @@ import com.queueshub.utils.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
+import java.util.regex.Pattern
 
 @ExperimentalGetImage
 @Composable
@@ -111,15 +112,47 @@ fun CarInfoScreen(
                 viewModel.plateImage = image
                 viewModel.plateText = string
             } else if (cameraType == CameraType.CAR_LICENSE) {
+                Logger.d("licenseImage 1")
+
                 licenseImage = image
                 cameraType = CameraType.CAR_LICENSE2
                 viewModel.licenseImage = image
                 viewModel.licenseText = string
+
+
+//                تاريخ الاصدار ٢٠٢٥/٠٩/٠٩
+//                , م الالكتروني
+//                , تاريخ الانتهاء ۲۰۲۸/۰۹/۰۸
+//                , الفحص الفني ٢٠٢٨
+
+                if (string.contains("الفحص الفني") || string.contains("الفحص الفنى")
+                    || string.contains("تاريخ الاصدار")
+                    || string.contains("تاريخ الأصدار")
+                    || string.contains("تاريخ الانتهاء")
+                    || string.contains("تاريخ الأنتهاء")
+                ) {
+                    // new variable to set return String form camera preview
+                    viewModel.carLicenseText = string
+
+                    openCamera = false
+                }
+
+                Logger.d("licenseImage 1 = $image")
+                Logger.d("licenseText 1 = $string")
+
             } else if (cameraType == CameraType.CAR_LICENSE2) {
+                Logger.d("licenseImage 2")
                 licenseImage2 = image
                 viewModel.licenseImage2 = image
-                openCamera = false
                 viewModel.licenseText2 = string
+
+                // new variable to set return String form camera preview
+                viewModel.carLicenseText = string
+
+                openCamera = false
+
+                Logger.d("licenseImage 2 = $image")
+                Logger.d("licenseText 2 = $string")
             }
             nextAvailable = viewModel.isNextCarInfoAvailable(plateAvailable, licenseAvailable)
         }
@@ -210,7 +243,8 @@ fun CarInfoScreen(
                     plateAvailable = if (it) 1 else 0
                     nextAvailable =
                         viewModel.isNextCarInfoAvailable(plateAvailable, licenseAvailable)
-                }, openImage = {
+                },
+                openImage = {
                     openImage = true
                     openedImage = it
                 },
@@ -240,11 +274,14 @@ fun CarInfoScreen(
                     licenseAvailable = if (it) 1 else 0
                     nextAvailable =
                         viewModel.isNextCarInfoAvailable(plateAvailable, licenseAvailable)
-                }, openImage = {
+                },
+                openImage = {
                     openImage = true
                     openedImage = it
                 },
             )
+
+            //// Button next to navigate to confirm Info Screen
             AppButton(
                 modifier = Modifier
                     .constrainAs(next) {
@@ -289,6 +326,7 @@ fun CarInfoScreen(
                 } else if (licenseAvailable == 0) {
                     goManualLicense()
                 } else {
+                    Logger.d("Confirmation")
                     goConfirmation()
                 }
             }

@@ -31,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.core.text.isDigitsOnly
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.queueshub.R
 import com.queueshub.data.api.model.ApiLog
@@ -43,6 +44,7 @@ import com.queueshub.ui.main.*
 import com.queueshub.ui.navigation.Router
 import com.queueshub.ui.theme.SpanishGreen
 import com.queueshub.utils.CameraType
+import com.queueshub.utils.Logger
 import com.queueshub.utils.toBitmap
 import java.io.File
 
@@ -64,13 +66,13 @@ fun SimEntryScreen(
     var showLoading by rememberSaveable { (mutableStateOf(false)) }
     var showTryAgain by rememberSaveable { (mutableStateOf(false)) }
     var dataType by rememberSaveable { (mutableStateOf("scan")) }
-    var cameraType by rememberSaveable { (mutableStateOf(CameraType.SIM))}
-    var simImage: File? by rememberSaveable { (mutableStateOf(viewModel.simImage )) }
+    var cameraType by rememberSaveable { (mutableStateOf(CameraType.SIM)) }
+    var simImage: File? by rememberSaveable { (mutableStateOf(viewModel.simImage)) }
     var openImage by rememberSaveable { (mutableStateOf(false)) }
     var openedImage: Bitmap? by rememberSaveable { mutableStateOf(null) }
     val vmLog: LogsViewModel = hiltViewModel()
 
-    BackHandler(openCameraSim||openScanner||openImage) {
+    BackHandler(openCameraSim || openScanner || openImage) {
         openCameraSim = false
         openScanner = false
         openImage = false
@@ -88,12 +90,26 @@ fun SimEntryScreen(
             if (cameraType == CameraType.SIM) {
                 simImage = image
                 viewModel.simImage = image
+                Logger.d("cameraType == CameraType.SIM")
             } else {
+                Logger.d("CameraType.SIM: string: $string")
+
                 if (string.isNotBlank()) {
                     try {
-                        val list = string.split(",")
-                        viewModel.simSerial = list[0]
-                        viewModel.simGSM = list[1]
+//                        Logger.d("cameraType != CameraType.SIM")
+//                        val list = string.split(",")
+//                        viewModel.simSerial = list[0]
+//                        viewModel.simGSM = list[1]
+//                        Logger.d("cameraType != CameraType.SIM ${viewModel.simSerial}")
+//                        Logger.d("cameraType != CameraType.SIM ${viewModel.simGSM}")
+
+
+                        viewModel.simSerial = viewModel.finalExtractSerial(string).toString()
+                        viewModel.simGSM = viewModel.extractGsm(string).toString()
+
+                        Logger.d("cameraType != CameraType.SIM ${viewModel.simSerial}")
+                        Logger.d("cameraType != CameraType.SIM ${viewModel.simGSM}")
+
                     } catch (_: Exception) {
                     }
                 }
@@ -139,8 +155,11 @@ fun SimEntryScreen(
         }
     } else if (openScanner) {
         CameraSIMBarcodePreview(onUpdateIMEI = {
+
+            Logger.d("onUpdateIMEI $it")
             viewModel.simSerial = it
         }, onUpdateGsm = {
+            Logger.d("onUpdateGsm $it")
             viewModel.simGSM = it
         }, onCloseScanner = { openScanner = false })
         if (showLoading) {
@@ -258,13 +277,13 @@ fun SimEntryScreen(
                     .padding(bottom = 34.dp),
                 text = R.string.next, isEnabled = nextAvailable,
             ) {
-                val description =  "تم تصوير الشريحه"
+                val description = "تم تصوير الشريحه"
                 val simDetails = ApiLogItem(
                     viewModel.plateNum,
                     description = description,
                     type = "sim",
                     viewModel.selectedOrder?.id?.toInt(),
-                    generatedId =viewModel.generatedId,
+                    generatedId = viewModel.generatedId,
                 )
 
                 val logArray = ArrayList<ApiLogItem>()
@@ -342,7 +361,8 @@ fun SIMCardContent(
             image?.let { res ->
                 val painter: Painter = painterResource(id = res)
 
-                Image(painter = painter,
+                Image(
+                    painter = painter,
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier.constrainAs(pic) {
@@ -353,17 +373,18 @@ fun SIMCardContent(
             }
         }
 
-        AppIconButton(onSubmit = {
-            checkCameraPermissionOrOpenCam(context, {
-                launcher.launch(
-                    Manifest.permission.CAMERA
-                )
-            }, {
-                alertVisibility = true
-            }, {
-                openCamera()
-            })
-        },
+        AppIconButton(
+            onSubmit = {
+                checkCameraPermissionOrOpenCam(context, {
+                    launcher.launch(
+                        Manifest.permission.CAMERA
+                    )
+                }, {
+                    alertVisibility = true
+                }, {
+                    openCamera()
+                })
+            },
             // Assign reference "button" to the Button composable
             // and constrain it to the top of the ConstraintLayout
             modifier = Modifier
@@ -377,7 +398,8 @@ fun SIMCardContent(
             icon = Icons.Default.PhotoCamera)
     }
 
-    showAlert(alertVisibility,
+    showAlert(
+        alertVisibility,
         R.string.camera_permission_disclosure,
         R.string.camera_permission_desc,
         R.string.cancel,
@@ -411,7 +433,7 @@ fun SimEntryScreenPreview() {
             text = "التقط صور الشريحة",
             style = MaterialTheme.typography.subtitle2
         )
-        
+
         DeviceCardContent(
             modifier = Modifier.fillMaxWidth(),
             scaffoldState = null,

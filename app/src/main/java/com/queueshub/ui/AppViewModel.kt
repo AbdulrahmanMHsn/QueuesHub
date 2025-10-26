@@ -15,6 +15,7 @@ import com.queueshub.domain.usecases.GetOrderStarted
 import com.queueshub.domain.usecases.GetUserLogged
 import com.queueshub.ui.models.Event
 import com.queueshub.ui.viewStates.CreateOrderViewState
+import com.queueshub.utils.Logger
 import com.queueshub.utils.OrderType
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +36,8 @@ class AppViewModel @Inject constructor(
     orderStarted: GetOrderStarted,
     val createOrder: CreateOrder
 ) : ViewModel() {
-    var generatedId: String?= null
-    var goingBack: Boolean= false
+    var generatedId: String? = null
+    var goingBack: Boolean = false
     private lateinit var finalOrderType: java.util.ArrayList<String>
     var selectedOrder: Order? = null
     var isAnyOrderOnProgress: Boolean = false
@@ -48,9 +49,10 @@ class AppViewModel @Inject constructor(
     var onUpdate = mutableStateOf(0)
 
 
-    fun generateUUID(){
-       generatedId =  UUID.randomUUID().toString()
+    fun generateUUID() {
+        generatedId = UUID.randomUUID().toString()
     }
+
     fun updateUI() {
         onUpdate.value = (0..1_000_000).random()
     }
@@ -62,6 +64,7 @@ class AppViewModel @Inject constructor(
         "أبيض",
         "ابيض",
         "احمر",
+        "لبيتي",
         "أحمر",
         "ازرق",
         "أزرق",
@@ -97,6 +100,8 @@ class AppViewModel @Inject constructor(
         "شيفرولية",
         "كيا",
         "بيجو",
+        "ام جي",
+        "ام جى",
         "هيونداي",
         "هيونداى",
         "سكودا",
@@ -119,6 +124,7 @@ class AppViewModel @Inject constructor(
         "جيلى",
         "شيرى",
         "شيري",
+        "شیری",
         "لادا",
         "نصر",
         "بيستون",
@@ -211,6 +217,172 @@ class AppViewModel @Inject constructor(
             year = "\\b(19|20)\\d{2}\\b".toRegex().find(licenseText2)?.value ?: ""
         } catch (_: Exception) {
         }
+
+        println("Method 2 - Regex: $shaseh")
+        println("Method 2 - Regex: $motor")
+        println("Method 2 - Regex: $color")
+        println("Method 2 - Regex: $carModel")
+        println("Method 2 - Regex: $year")
+    }
+
+    fun finalExtractDataFromCarLicense() {
+        Logger.d("carLicenseText 1 = $carLicenseText")
+
+        shaseh = extractChassisNumber(carLicenseText)
+        motor = extractMotorNumber(carLicenseText)
+        color = extractColor(carLicenseText, colorList = listOfColors)
+        carModel = extractCarModel(carLicenseText, carList = listOfCarModels)
+        year = extractYear(carLicenseText)
+
+        println("Method 1 - Regex: $shaseh")
+        println("Method 1 - Regex: $motor")
+        println("Method 1 - Regex: $color")
+        println("Method 1 - Regex: $carModel")
+        println("Method 1 - Regex: $year")
+    }
+
+    private fun extractChassisNumber(ocrText: String): String {
+        var cleanedText = ocrText
+            .replace("شاسته", "شاسيه")
+            .replace("شنسيه", "شاسيه")
+            .replace("شنسية", "شاسيه")
+            .replace("شاسبه", "شاسيه")
+            .replace("المناسبة", "شاسيه")
+            .replace('ة', 'ه')
+
+        // More flexible regex that handles optional spaces and diacritics
+        val regex = Regex("شاسي[هة]\\s*([A-Za-z0-9]+)", RegexOption.IGNORE_CASE)
+
+        val match = regex.find(cleanedText)
+        return match?.groupValues?.get(1) ?: ""
+    }
+
+    private fun extractMotorNumber(ocrText: String): String {
+        // Split by commas and clean each part
+        val parts = ocrText.split(",").map { part ->
+            part.trim().replace(Regex("\\s+"), " ")
+        }
+
+        // Look for the part containing "موتور"
+        for (part in parts) {
+            if (part.contains("موتور")) {
+                // Extract alphanumeric sequence after "موتور"
+                val motorPattern = Regex("موتور\\s*([A-Z0-9]{1,20})")
+                val match = motorPattern.find(part)
+                return match?.groupValues?.get(1)?.trim() ?: ""
+            }
+        }
+
+        return ""
+    }
+
+    private fun extractColor(ocrText: String, colorList: List<String>): String {
+        // Split by commas and clean each part
+        val parts = ocrText.split(",").map { part ->
+            part.trim().replace(Regex("\\s+"), " ")
+        }
+
+        // Search for any color from the list in any part
+        for (part in parts) {
+            for (color in colorList) {
+                if (part.contains(color, ignoreCase = true)) {
+                    return color
+                }
+            }
+        }
+
+        return ""
+    }
+
+    private fun extractCarModel(ocrText: String, carList: List<String>): String {
+        // Split by commas and clean each part
+        val parts = ocrText.split(",").map { part ->
+            part.trim().replace(Regex("\\s+"), " ")
+        }
+
+        // Search for any color from the list in any part
+        for (part in parts) {
+            for (color in carList) {
+                if (part.contains(color.trim(), ignoreCase = true)) {
+                    return color
+                }
+            }
+        }
+
+        return ""
+    }
+
+    private fun extractYear(ocrText: String): String {
+        // Arabic to English number mapping
+        val arabicToEnglish = mapOf(
+            '٠' to '0', '١' to '1', '٢' to '2', '٣' to '3', '٤' to '4',
+            '٥' to '5', '٦' to '6', '٧' to '7', '٨' to '8', '٩' to '9'
+        )
+
+        // Convert Arabic numbers to English
+        val normalizedText = ocrText.map { char ->
+            arabicToEnglish[char] ?: char
+        }.joinToString("")
+
+        // Split by commas and clean each part
+        val parts = normalizedText.split(",").map { part ->
+            part.trim().replace(Regex("\\s+"), " ")
+        }
+
+        // Look for 4-digit year pattern (1900-2099)
+        val yearPattern = Regex("\\b(19[0-9]{2}|20[0-9]{2})\\b")
+
+        for (part in parts) {
+            val match = yearPattern.find(part)
+            if (match != null) {
+                return match.value
+            }
+        }
+
+        return ""
+    }
+
+
+//    fun extractGsm(text: String): String? {
+//        // val gsmRegex = Regex("""Tel:\s*(\d+)""") // // Extract phone number after "Tel:"
+//        val gsmRegex = Regex("""(01\d+)""") // Extract phone number starting with "01"
+//        return gsmRegex.find(text)?.groupValues?.get(1)
+//    }
+
+    fun extractGsm(text: String): String {
+        // Extract phone number starting with "01" OR after "Tel:"
+        val gsmRegex = Regex("""(01\d+)|Tel:\s*(\d+)""")
+        val match = gsmRegex.find(text)
+        return match?.groupValues?.get(1)?.takeIf { it.isNotEmpty() }
+            ?: match?.groupValues?.get(2) ?: ""
+    }
+
+    fun extractSerial(text: String): String? {
+        // Extract serial number starting with 89200
+        val serialRegex = Regex("""(89200\d+)""")
+        return serialRegex.find(text)?.groupValues?.get(1)
+    }
+
+    fun extractSerialToSingleLine(input: String): String {
+        return input
+            .split(",", " ", "\n", "\r", "\t")  // Split by comma, space, and whitespace
+            .map { it.trim() }                   // Remove any remaining whitespace
+            .filter { it.isNotEmpty() }          // Remove empty strings
+            .joinToString("")                    // Join without any separator
+    }
+
+    fun finalExtractSerial(input: String): String {
+        // First, clean and join the string to single line
+        val cleanedString = input
+            .split(",", " ", "\n", "\r", "\t")  // Split by comma, space, and whitespace
+            .map { it.trim() }                   // Remove any remaining whitespace
+            .filter { it.isNotEmpty() }          // Remove empty strings
+            .filter { it.all { char -> char.isDigit() } }  // Keep only strings with digits
+            .joinToString("")                    // Join without any separator
+
+        // Extract serial number starting with 89200
+        val serialRegex = Regex("""(89200\d+)""")
+        return serialRegex.find(cleanedString)?.groupValues?.get(1) ?: ""
     }
 
     fun processSimImage() {
@@ -229,7 +401,9 @@ class AppViewModel @Inject constructor(
 
     //        "gitell\n" + ", مصر\n" + "ن ط ب ٣٩٥\n" + ", EGYPT\n" + ", 395\n" + ", B T N\n"
     var simText: String = ""
+    var licenseText: String = ""
     var licenseText2: String = ""
+    var carLicenseText: String = ""
 
     //        "Gr\n" + ", ۹۰۰۰۰۰۰۱۳٠٠٦٠٧٢\n" + ", نصر\n" + "شاسيه 9101788\n" + "موتور 0257043\n" + "4 سلندر بنزین\n" + "مجمعة التامين الاجباري للمركبات تاريخ الفحص ٢٠٢٥\n" + ", 127\n" + ", 1920\n" + ", غير مشترك عن سائق\n" + "م الكتروني\n" + ", لمسوريا\n" + ", **90880\n" + "أسود\n" + ", اساس\n" + "-\n" + ", SO\n"
     var shaseh: String = ""
@@ -258,7 +432,7 @@ class AppViewModel @Inject constructor(
     var chasisImage: File? = null
     var simImage: File? = null
     var maintenanceFile: File? = null
-    var licenseText: String = ""
+
 
     //        "جمهورية مصر العربية\n" + "وزارة الداخلية\n" + "ادارة مرور الفيـوم\n" + ", ايمن جرجس فرج عيد\n" + ", الكعابي الجديدة سنورس\n" + "نهاية الترخيص ۲۸-۰۹-۲۰۲۳\n" + "تاريخ التحرير ۲۸-۰۹-۲۰۲۰\n" + ", وحده مرور سنورس\n" + ", S\n" + ", ۸\n" + ", ۲۰۹۱۵\n" + ", رخصة تسير ملاكى\n" + "مصری\n" + ", عبدا ما عدتر\n"
     private val _userLogged: MutableStateFlow<Pair<Boolean, Long?>> =
@@ -348,7 +522,9 @@ class AppViewModel @Inject constructor(
     }
 
     private fun getPlateDone(plateAvailable: Int, licenseAvailable: Int): Boolean =
-        plateAvailable == 0 || (plateAvailable == 1 && plateImage != null && licenseAvailable == 0) || (plateAvailable == 1 && plateImage != null && licenseAvailable == 1 && licenseImage != null && licenseImage2 != null)
+        plateAvailable == 0 || (plateAvailable == 1 && plateImage != null && licenseAvailable == 0)
+                || (plateAvailable == 1 && plateImage != null && licenseAvailable == 1 && licenseImage != null && licenseImage2 != null)
+                || (plateAvailable == 1 && plateImage != null && licenseAvailable == 1 && licenseImage != null)
 
     private fun getLicenseDone(licenseAvailable: Int): Boolean =
         licenseAvailable == 0 || (licenseAvailable == 1 && licenseImage != null && licenseImage2 != null)
@@ -387,6 +563,8 @@ class AppViewModel @Inject constructor(
         licenseText = ""
         technicalStart = ""
 
+        carLicenseText = ""
+
         plateInfoAuto = false
         licenseAuto = false
         selectedSensors = mutableListOf<Sensor>()
@@ -397,7 +575,6 @@ class AppViewModel @Inject constructor(
     fun saveOrderType(arrayListOf: java.util.ArrayList<String>) {
         this.finalOrderType = arrayListOf
     }
-
 
 }
 
