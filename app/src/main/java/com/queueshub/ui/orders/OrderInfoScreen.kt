@@ -189,6 +189,12 @@ private fun ContentCard(
             // Visit Information Section
             VisitInfoSection(order = order)
 
+            // Order Counts Section
+            OrderCountsSection(order = order)
+
+            // Notes Section
+            NotesSection(order = order)
+
             // Bottom button with spacer to push it down
             Spacer(modifier = Modifier.weight(1f))
             BottomButton(
@@ -357,6 +363,55 @@ private fun BottomButton(
 }
 
 @Composable
+private fun OrderCountsSection(order: Order) {
+    val orderCounts = order.orderCounts
+    if (orderCounts.isNullOrEmpty()) return
+
+    val categoryTitles = mapOf(
+        "car_categories" to "عدد فئات السيارات",
+        "sensors" to "عدد الحساسات ",
+        "devices" to "عدد الأجهزة "
+    )
+
+    val grouped = orderCounts.groupBy { it.orderableCountType }
+
+    Column(modifier = Modifier.padding(top = 24.dp)) {
+        grouped.forEach { (category, items) ->
+            SectionTitle(text = categoryTitles[category] ?: category)
+
+            items.forEach { item ->
+                InputField(
+                    text = item.orderableCount?.name.orEmpty(),
+                    keyboardType = KeyboardType.Text,
+                    content = item.count.toString(),
+                    isEnabled = false,
+                    modifier = Modifier.padding(top = 8.dp),
+                    onValueChange = {},
+                    imeAction = ImeAction.Done
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotesSection(order: Order) {
+    Column(modifier = Modifier.padding(top = 24.dp)) {
+        SectionTitle(text = "ملاحظات")
+
+        InputField(
+            text = "الملاحظات",
+            keyboardType = KeyboardType.Text,
+            content = order.notes.orEmpty(),
+            isEnabled = false,
+            modifier = Modifier.padding(top = 8.dp),
+            onValueChange = {},
+            imeAction = ImeAction.Done
+        )
+    }
+}
+
+@Composable
 private fun SectionTitle(text: String) {
     Text(
         text = text,
@@ -391,7 +446,9 @@ fun OrderInfoScreenPreview() {
         orderCreator = 789L,
         neededAmount = "2500",
         receivedAmount = "1500",
-        neededName = "أحمد محمد - مدير الصيانة"
+        neededName = "أحمد محمد - مدير الصيانة",
+        orderCounts = null,
+        notes = null
     )
 
     // Show the content directly without ViewModel dependencies
@@ -496,7 +553,9 @@ fun CustomerInfoSectionPreview() {
         orderCreator = 789L,
         neededAmount = "1500",
         receivedAmount = "1500",
-        neededName = "صيانة سيارات"
+        neededName = "صيانة سيارات",
+        orderCounts = null,
+        notes = null
     )
     
     Card(
@@ -534,7 +593,9 @@ fun PaymentInfoSectionPreview() {
         orderCreator = 789L,
         neededAmount = "3500", // With payment
         receivedAmount = "1500",
-        neededName = "صيانة سيارات"
+        neededName = "صيانة سيارات",
+        orderCounts = null,
+        notes = null
     )
     
     Card(
@@ -572,7 +633,9 @@ fun VisitInfoSectionPreview() {
         orderCreator = 789L,
         neededAmount = "1500",
         receivedAmount = "1500",
-        neededName = "صيانة سيارات"
+        neededName = "صيانة سيارات",
+        orderCounts = null,
+        notes = null
     )
     
     Card(

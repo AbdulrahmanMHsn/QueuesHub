@@ -22,4 +22,21 @@ data class Order(
     val receivedAmount: String,
     val neededName: String,
     val governorate: Government?,
+    val orderCounts: List<OrderCount>?,
+    val notes: String?,
+)
+
+data class OrderCount(
+    val id: Long,
+    val orderId: Long,
+    val orderableCountType: String,
+    val orderableCountId: Long,
+    val count: Int,
+    val supplyCount: Int,
+    val orderableCount: OrderableCount?
+)
+
+data class OrderableCount(
+    val id: Long,
+    val name: String
 )

@@ -350,7 +350,9 @@ fun AllOrdersScreenPreview() {
         orderCreator = 789L,
         neededAmount = "1500",
         receivedAmount = "1500",
-        neededName = "صيانة سيارات"
+        neededName = "صيانة سيارات",
+        orderCounts = null,
+        notes = null
     )
 
     val mockOrderr =  Order(
@@ -374,7 +376,9 @@ fun AllOrdersScreenPreview() {
         orderCreator = 789L,
         neededAmount = "1500",
         receivedAmount = "1500",
-        neededName = "صيانة سيارات"
+        neededName = "صيانة سيارات",
+        orderCounts = null,
+        notes = null
     )
 
     AllOrdersScreenContent(

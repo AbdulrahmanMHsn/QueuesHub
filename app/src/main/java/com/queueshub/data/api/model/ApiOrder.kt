@@ -1,6 +1,8 @@
 package com.queueshub.data.api.model
 
 import com.queueshub.domain.model.Order
+import com.queueshub.domain.model.OrderCount
+import com.queueshub.domain.model.OrderableCount
 
 
 data class ApiOrder(
@@ -25,7 +27,30 @@ data class ApiOrder(
     val needed_amount: String?,
     val received_amount: String?,
     val needed_name: String?,
-    val governorate: ApiGovernment?
+    val governorate: ApiGovernment?,
+    val order_counts: List<ApiOrderCount>?,
+    val notes: String?
+    )
+
+data class ApiOrderCount(
+    val id: Long?,
+    val order_id: Long?,
+    val orderable_count_type: String?,
+    val orderable_count_id: Long?,
+    val count: Int?,
+    val created_at: String?,
+    val updated_at: String?,
+    val deleted_at: String?,
+    val supply_count: Int?,
+    val orderable_count: ApiOrderableCount?
+)
+
+data class ApiOrderableCount(
+    val id: Long?,
+    val name: String?,
+    val created_at: String?,
+    val updated_at: String?,
+    val deleted_at: String?
 )
 
 data class ApiOrderResource(
@@ -61,6 +86,27 @@ fun ApiOrder.mapToDomain(): Order {
         needed_amount.orEmpty(),
         received_amount.orEmpty(),
         needed_name.orEmpty(),
-        governorate?.mapToDomain()
+        governorate?.mapToDomain(),
+        order_counts?.map { it.mapToDomain() },
+        notes = notes
+    )
+}
+
+fun ApiOrderCount.mapToDomain(): OrderCount {
+    return OrderCount(
+        id = id ?: 0,
+        orderId = order_id ?: 0,
+        orderableCountType = orderable_count_type.orEmpty(),
+        orderableCountId = orderable_count_id ?: 0,
+        count = count ?: 0,
+        supplyCount = supply_count ?: 0,
+        orderableCount = orderable_count?.mapToDomain()
+    )
+}
+
+fun ApiOrderableCount.mapToDomain(): OrderableCount {
+    return OrderableCount(
+        id = id ?: 0,
+        name = name.orEmpty()
     )
 }
